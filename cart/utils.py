@@ -37,6 +37,8 @@ def remove_from_cart(request, product_id):
 
 def delete_from_cart(request, product_id):
     """Полностью удаляет товар из корзины"""
+    if not product_id:
+        return
     cart = request.session.get('cart', {})
     pid = str(product_id)
     if pid in cart:

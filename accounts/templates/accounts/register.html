@@ -1,16 +1,25 @@
 {% extends 'catalog/base.html' %}
 {% block content %}
-<h2>Регистрация</h2>
-<form method="post" class="checkout-form">
-  {% csrf_token %}
-  {% for field in form %}
-    <div class="form-group">
-      {{ field.label_tag }}
-      {{ field }}
-      {% if field.errors %}<small class="error">{{ field.errors }}</small>{% endif %}
-    </div>
-  {% endfor %}
-  <button type="submit">Создать аккаунт</button>
-</form>
-<p>Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти</a></p>
+<div class="container">
+    <form method="post" class="auth-form">
+        <h2 style="text-align: center; margin-bottom: 30px;">Создание аккаунта</h2>
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div class="field-error">{{ field.errors.0 }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn-primary">Зарегистрироваться</button>
+
+        <p style="text-align: center; margin-top: 20px; color: var(--text-muted);">
+            Уже есть аккаунт? <a href="{% url 'accounts:login' %}" style="color: var(--primary); font-weight: 600;">Войти</a>
+        </p>
+    </form>
+</div>
 {% endblock %}

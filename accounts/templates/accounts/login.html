@@ -1,13 +1,29 @@
 {% extends 'catalog/base.html' %}
 {% block content %}
-<h2>Вход в аккаунт</h2>
-<form method="post" class="checkout-form">
-  {% csrf_token %}
-  {{ form.non_field_errors }}
-  {% for field in form %}
-    <div class="form-group">{{ field.label_tag }} {{ field }}</div>
-  {% endfor %}
-  <button type="submit">Войти</button>
-</form>
-<p>Нет аккаунта? <a href="{% url 'accounts:register' %}">Зарегистрироваться</a></p>
+<div class="container">
+    <form method="post" class="auth-form">
+        <h2 style="text-align: center; margin-bottom: 30px;">Вход в аккаунт</h2>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert-msg" style="margin-bottom: 20px;">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}">Логин или Email</label>
+            <input type="text" id="{{ form.username.id_for_label }}" name="username" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.password.id_for_label }}">Пароль</label>
+            <input type="password" id="{{ form.password.id_for_label }}" name="password" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn-primary">Войти</button>
+
+        <p style="text-align: center; margin-top: 20px; color: var(--text-muted);">
+            Нет аккаунта? <a href="{% url 'accounts:register' %}" style="color: var(--primary); font-weight: 600;">Зарегистрироваться</a>
+        </p>
+    </form>
+</div>
 {% endblock %}

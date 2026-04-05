@@ -1,22 +1,38 @@
 {% extends 'catalog/base.html' %}
 {% block content %}
-<h2>👤 Личный кабинет</h2>
-<p>Добро пожаловать, <strong>{{ user.username }}</strong>!</p>
+<div class="container cart-page">
+    <h2 class="cart-title">👤 Личный кабинет</h2>
 
-<h3>📦 Последние заказы</h3>
-{% if orders %}
-<table class="cart-table">
-  <tr><th>№</th><th>Дата</th><th>Сумма</th><th>Статус</th></tr>
-  {% for order in orders %}
-  <tr>
-    <td>#{{ order.pk }}</td>
-    <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
-    <td>{{ order.total|floatformat:2 }} ₽</td>
-    <td>{{ order.get_status_display }}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>У вас пока нет заказов.</p>
-{% endif %}
+    <div class="auth-form" style="margin: 0; width: 100%; max-width: 100%;">
+        <h3 style="margin-bottom: 10px;">Привет, {{ user.username }}!</h3>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Email: {{ user.email|default:"Не указан" }}</p>
+
+        <h3 style="margin-bottom: 15px;">📦 История заказов</h3>
+
+        {% if orders %}
+        <div class="orders-list">
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-header">
+                    <span class="order-id">Заказ #{{ order.pk }}</span>
+                    <span class="order-status {{ order.status }}">{{ order.get_status_display }}</span>
+                </div>
+                <div class="order-body">
+                    <p>📅 {{ order.created_at|date:"d.m.Y H:i" }}</p>
+                    <p>💰 {{ order.total|floatformat:0 }} ₽</p>
+                    <p>📍 {{ order.address|truncatechars:40 }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="text-align: center; padding: 40px; background: #F8F9FA; border-radius: 12px;">
+            <p style="font-size: 40px;">📭</p>
+            <h4>У вас пока нет заказов</h4>
+            <p style="color: var(--text-muted); margin-bottom: 15px;">Самое время попробовать наше меню!</p>
+            <a href="{% url 'catalog:menu' %}" class="btn-primary" style="display: inline-block; width: auto; padding: 10px 20px;">Перейти в меню</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

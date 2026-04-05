@@ -1,37 +1,68 @@
 {% extends 'catalog/base.html' %}
 {% load cart_extras %}
+
 {% block content %}
-    <h2>🛒 Корзина</h2>
-    {% if cart %}
-        <table class="cart-table">
-            <tr>
-                <th>Блюдо</th>
-                <th>Цена</th>
-                <th>Кол-во</th>
-                <th>Итого</th>
-                <th></th>
-            </tr>
-            {% for pid, item in cart.items %}
-                <tr data-id="{{ pid }}">
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.price }} ₽</td>
-                    <td>
-                        <button class="qty-btn" data-action="remove" data-id="{{ pid }}">-</button>
-                        <span class="qty">{{ item.quantity }}</span>
-                        <button class="qty-btn" data-action="add" data-id="{{ pid }}">+</button>
-                    </td>
-                    <td class="line-total">{{ item.price|mul:item.quantity|floatformat:2 }} ₽</td>
-                    <td>
-                        <button class="remove-item" data-id="{{ pid }}">✕</button>
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-        <div class="cart-footer">
-            <p>Итого: <strong id="cart-total">{{ total|floatformat:2 }} ₽</strong></p>
-            <a href="{% url 'orders:checkout' %}" class="checkout-btn">Оформить заказ</a>
-        </div>
-    {% else %}
-        <p>Корзина пуста. <a href="{% url 'catalog:menu' %}">Перейти в меню</a></p>
-    {% endif %}
+    <div class="container cart-page">
+        <h2 class="cart-title">🛒 Ваша корзина</h2>
+
+        {% if cart %}
+            <div class="cart-layout">
+                <div class="cart-items">
+                    <table class="cart-table">
+                        <thead>
+                        <tr>
+                            <th>Блюдо</th>
+                            <th>Цена</th>
+                            <th>Кол-во</th>
+                            <th>Итого</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for pid, item in cart.items %}
+                            <tr data-id="{{ pid }}">
+                                <td>
+                                    <div class="cart-item-info">
+                                        {% if item.image %}
+                                            <img src="{{ item.image }}" alt="{{ item.name }}" class="cart-item-img">
+                                        {% else %}
+                                            <div class="cart-item-img placeholder-cart">🍔</div>
+                                        {% endif %}
+                                        <span class="cart-item-name">{{ item.name }}</span>
+                                    </div>
+                                </td>
+                                <td class="price-col">{{ item.price|floatformat:0 }} ₽</td>
+                                <td>
+                                    <div class="qty-control">
+                                        <button class="qty-btn" data-action="remove" data-id="{{ pid }}">−</button>
+                                        <span class="qty">{{ item.quantity }}</span>
+                                        <button class="qty-btn" data-action="add" data-id="{{ pid }}">+</button>
+                                    </div>
+                                </td>
+                                <td class="line-total">{{ item.price|mul:item.quantity|floatformat:0 }} ₽</td>
+                                <td>
+                                    <button class="remove-btn" data-id="{{ pid }}">✕</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="cart-summary">
+                    <p>Итого к оплате:</p>
+                    <div class="total-price" id="cart-total">{{ total|floatformat:0 }} ₽</div>
+                    <a href="{% url 'orders:checkout' %}" class="checkout-btn">Оформить заказ →</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-cart">
+                <div style="font-size: 64px; margin-bottom: 20px;">🛒</div>
+                <h3>Корзина пуста</h3>
+                <p style="color: var(--text-muted); margin-bottom: 25px;">Добавьте что-нибудь вкусное из меню!</p>
+                <a href="{% url 'catalog:menu' %}" class="btn-primary"
+                   style="display: inline-block; width: auto; padding: 12px 28px;">Перейти в меню</a>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

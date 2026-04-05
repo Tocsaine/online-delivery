@@ -34,10 +34,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 3. Крестик удаления позиции
-    const removeBtn = e.target.closest('.remove-item');
+    const removeBtn = e.target.closest('.remove-btn');
     if (removeBtn) {
       e.preventDefault();
-      updateCart('delete', removeBtn.dataset.id);
+      const id = removeBtn.dataset.id;
+
+      // 🔍 Отладка: проверяем, что id существует
+      console.log('🗑️ Delete clicked:', {
+        id: id,
+        type: typeof id,
+        html: removeBtn.outerHTML
+      });
+
+      if (!id) {
+        console.error('🔴 Ошибка: data-id атрибут пуст или отсутствует!');
+        return;
+      }
+
+      updateCart('delete', id);
       return;
     }
   });
