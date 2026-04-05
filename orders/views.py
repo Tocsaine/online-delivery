@@ -23,7 +23,8 @@ def checkout(request):
             customer_name=name,
             phone=phone,
             address=address,
-            total=cart_utils.get_cart_total(cart)
+            total=cart_utils.get_cart_total(cart),
+            user=request.user if request.user.is_authenticated else None,
         )
 
         for pid, item in cart.items():

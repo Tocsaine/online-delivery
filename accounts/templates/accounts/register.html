@@ -1,0 +1,16 @@
+{% extends 'catalog/base.html' %}
+{% block content %}
+<h2>Регистрация</h2>
+<form method="post" class="checkout-form">
+  {% csrf_token %}
+  {% for field in form %}
+    <div class="form-group">
+      {{ field.label_tag }}
+      {{ field }}
+      {% if field.errors %}<small class="error">{{ field.errors }}</small>{% endif %}
+    </div>
+  {% endfor %}
+  <button type="submit">Создать аккаунт</button>
+</form>
+<p>Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти</a></p>
+{% endblock %}

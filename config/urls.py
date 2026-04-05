@@ -8,6 +8,7 @@ urlpatterns = [
     path('', include('catalog.urls')),
     path('cart/', include('cart.urls')),
     path('orders/', include('orders.urls')),
+    path('accounts/', include('accounts.urls')),
 ]
 
 # Для разработки: отдаём медиа-файлы напрямую

@@ -3,6 +3,9 @@ from catalog.models import MenuItem
 
 
 class Order(models.Model):
+    user = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders'
+    )
     STATUS_CHOICES = [
         ('new', 'Новый'),
         ('preparing', 'Готовится'),

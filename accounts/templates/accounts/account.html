@@ -1,0 +1,22 @@
+{% extends 'catalog/base.html' %}
+{% block content %}
+<h2>👤 Личный кабинет</h2>
+<p>Добро пожаловать, <strong>{{ user.username }}</strong>!</p>
+
+<h3>📦 Последние заказы</h3>
+{% if orders %}
+<table class="cart-table">
+  <tr><th>№</th><th>Дата</th><th>Сумма</th><th>Статус</th></tr>
+  {% for order in orders %}
+  <tr>
+    <td>#{{ order.pk }}</td>
+    <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+    <td>{{ order.total|floatformat:2 }} ₽</td>
+    <td>{{ order.get_status_display }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>У вас пока нет заказов.</p>
+{% endif %}
+{% endblock %}

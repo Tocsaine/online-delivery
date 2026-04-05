@@ -2,6 +2,34 @@
 
 {% block content %}
 <h2>Наше меню</h2>
+
+<!-- Форма поиска -->
+<form method="get" action="{% url 'catalog:menu' %}" class="search-form">
+    <input type="search"
+           name="search"
+           placeholder="Найти бургер, пиццу..."
+           value="{{ search_query }}">
+    {% if active_category %}
+    <input type="hidden" name="category" value="{{ active_category }}">
+    {% endif %}
+    <button type="submit">🔍</button>
+</form>
+
+<!--  Фильтр по категориям (теперь сохраняет search_query) -->
+<div class="category-filter">
+    <a href="?{% if search_query %}search={{ search_query|urlencode }}{% endif %}"
+       class="filter-btn {% if not active_category %}active{% endif %}">
+        Все
+    </a>
+    {% for cat in categories %}
+    <a href="?category={{ cat.slug }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}"
+       class="filter-btn {% if active_category == cat.slug %}active{% endif %}">
+        {{ cat.name }}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Сетка товаров -->
 <div class="menu-grid">
     {% for item in items %}
     <div class="menu-card" data-id="{{ item.id }}" data-name="{{ item.name }}" data-price="{{ item.price }}">
@@ -18,7 +46,7 @@
         </div>
     </div>
     {% empty %}
-    <p>Меню пока пустое. Добавьте блюда через <a href="/admin/">админ-панель</a>.</p>
+    <p class="no-items">Ничего не найдено. Попробуйте изменить запрос или <a href="{% url 'catalog:menu' %}">сбросить фильтры</a>.</p>
     {% endfor %}
 </div>
 {% endblock %}
