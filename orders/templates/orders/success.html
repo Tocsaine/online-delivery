@@ -1,0 +1,10 @@
+{% extends 'catalog/base.html' %}
+{% block content %}
+<div class="success-box">
+  <h2>✅ Заказ успешно оформлен!</h2>
+  <p>Номер заказа: <strong>#{{ order.pk }}</strong></p>
+  <p>Сумма: <strong>{{ order.total }} ₽</strong></p>
+  <p>Мы свяжемся с вами для подтверждения.</p>
+  <a href="{% url 'catalog:menu' %}" class="btn">Вернуться в меню</a>
+</div>
+{% endblock %}

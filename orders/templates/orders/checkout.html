@@ -1,0 +1,12 @@
+{% extends 'catalog/base.html' %}
+{% block content %}
+<h2>📦 Оформление заказа</h2>
+<form method="post" class="checkout-form">
+  {% csrf_token %}
+  <input type="text" name="name" placeholder="Ваше имя" required>
+  <input type="tel" name="phone" placeholder="Телефон" required>
+  <textarea name="address" placeholder="Адрес доставки" required></textarea>
+  <p>К оплате: <strong>{{ total|floatformat:2 }} ₽</strong></p>
+  <button type="submit">Подтвердить заказ</button>
+</form>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'catalog/base.html' %}
+{% load cart_extras %}
+{% block content %}
+    <h2>🛒 Корзина</h2>
+    {% if cart %}
+        <table class="cart-table">
+            <tr>
+                <th>Блюдо</th>
+                <th>Цена</th>
+                <th>Кол-во</th>
+                <th>Итого</th>
+                <th></th>
+            </tr>
+            {% for pid, item in cart.items %}
+                <tr data-id="{{ pid }}">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.price }} ₽</td>
+                    <td>
+                        <button class="qty-btn" data-action="remove" data-id="{{ pid }}">-</button>
+                        <span class="qty">{{ item.quantity }}</span>
+                        <button class="qty-btn" data-action="add" data-id="{{ pid }}">+</button>
+                    </td>
+                    <td class="line-total">{{ item.price|mul:item.quantity|floatformat:2 }} ₽</td>
+                    <td>
+                        <button class="remove-item" data-id="{{ pid }}">✕</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <div class="cart-footer">
+            <p>Итого: <strong id="cart-total">{{ total|floatformat:2 }} ₽</strong></p>
+            <a href="{% url 'orders:checkout' %}" class="checkout-btn">Оформить заказ</a>
+        </div>
+    {% else %}
+        <p>Корзина пуста. <a href="{% url 'catalog:menu' %}">Перейти в меню</a></p>
+    {% endif %}
+{% endblock %}
