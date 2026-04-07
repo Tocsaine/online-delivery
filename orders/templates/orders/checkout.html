@@ -51,8 +51,7 @@
                     <!-- Поле ввода нового адреса -->
                     <textarea name="address" id="address-textarea" class="form-control" rows="3"
                               placeholder="Улица, дом, квартира..."
-                              style="margin-top: 10px; {% if last_address %}display: none;{% endif %}"
-                              required></textarea>
+                              style="margin-top: 10px; {% if last_address %}display: none;{% endif %}"></textarea>
 
                     <!-- Галочка сохранения -->
                     <div id="save-address-block"
@@ -89,5 +88,7 @@
                 saveBlock.style.display = 'none';
             }
         }
+
+        window.addEventListener('DOMContentLoaded', toggleAddressInput);
     </script>
 {% endblock %}
