@@ -261,7 +261,11 @@ img {
     display: flex;
     flex-direction: column;
     position: relative;
-    animation: fadeInUp 0.5s ease forwards;
+    animation: fadeInUp 0.4s ease forwards;
+
+    /* 🔒 Фикс против растягивания */
+    min-height: 380px; /* Гарантированная минимальная высота */
+    height: auto;
 }
 
 .menu-card:hover {
@@ -269,17 +273,18 @@ img {
     box-shadow: var(--shadow-lg);
 }
 
-.card-image {
+/* 🔒 Фикс для изображений — сохраняем пропорции */
+.card-image,
+.placeholder-img {
     width: 100%;
-    aspect-ratio: 4/3;
+    aspect-ratio: 4/3; /* Явное соотношение сторон */
     object-fit: cover;
-    background: #eee;
+    background: #F0F2F5;
+    display: block;
+    flex-shrink: 0; /* Запрещаем сжиматься */
 }
 
 .placeholder-img {
-    width: 100%;
-    aspect-ratio: 4/3;
-    background: #F0F2F5;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -288,9 +293,10 @@ img {
 
 .card-body {
     padding: 16px;
-    flex: 1;
+    flex: 1 1 auto; /* Растягиваем, но не сжимаем меньше контента */
     display: flex;
     flex-direction: column;
+    min-height: 0; /* Важно для flex-контейнеров */
 }
 
 .card-title {
@@ -303,15 +309,20 @@ img {
     font-size: 13px;
     color: var(--text-muted);
     margin-bottom: 16px;
-    flex-grow: 1;
+    flex-grow: 1; /* Описание занимает свободное место */
     line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Обрезаем после 3 строк */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .card-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: auto;
+    margin-top: auto; /* Прижимаем к низу */
+    padding-top: 8px;
 }
 
 .card-price {
@@ -995,4 +1006,89 @@ textarea.form-control {
     text-align: center;
     color: var(--secondary);
     user-select: none;
+}
+
+/* 🔒 Стабилизация сетки корзины */
+.cart-table {
+    table-layout: fixed; /* Фиксирует ширину колонок, игнорируя изменение контента */
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Явные пропорции колонок (в сумме 100%) */
+.cart-table th:nth-child(1), .cart-table td:nth-child(1) {
+    width: 45%;
+}
+
+/* Название + фото */
+.cart-table th:nth-child(2), .cart-table td:nth-child(2) {
+    width: 12%;
+    text-align: right;
+}
+
+/* Цена за шт. */
+.cart-table th:nth-child(3), .cart-table td:nth-child(3) {
+    width: 18%;
+    text-align: center;
+}
+
+/* Кол-во */
+.cart-table th:nth-child(4), .cart-table td:nth-child(4) {
+    width: 15%;
+    text-align: right;
+}
+
+/* Итого */
+.cart-table th:nth-child(5), .cart-table td:nth-child(5) {
+    width: 10%;
+    text-align: center;
+}
+
+/* Удалить */
+
+/* Предотвращаем перенос цен и обрезку длинных названий */
+.cart-item-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.price-col, .line-total {
+    font-variant-numeric: tabular-nums; /* Моноширинные цифры для ровного выравнивания */
+}
+
+/* ✨ Анимации для фильтрации меню */
+.menu-grid {
+    transition: opacity 0.2s ease;
+}
+
+.menu-grid.filtering {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.menu-card {
+    animation: fadeInUp 0.4s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Плавное переключение активной кнопки */
+.filter-btn {
+    transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+    box-shadow: 0 0 0 2px var(--primary), 0 4px 12px rgba(255, 94, 0, 0.2);
 }

@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🟢 app.js инициализирован');
 
-    // 🚀 Применяем начальное состояние корзины сразу при загрузке страницы
-    if (window.INITIAL_CART && document.querySelector('.menu-grid')) {
-        renderMenuWidgets(window.INITIAL_CART);
-    }
+    // 🔑 ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ: живое зеркало корзины на клиенте
+    let currentCart = window.INITIAL_CART || {};
+
+    // Сразу рендерим виджеты для начального состояния
+    renderMenuWidgets(currentCart);
 
     // 🔹 Безопасное получение CSRF-токена
     function getCSRFToken() {
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 🔹 Отправка запроса
+    // 🔹 Отправка запроса на сервер
     function updateCart(action, id) {
         const csrfToken = getCSRFToken();
         if (!csrfToken) {
@@ -74,6 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.ok ? res.json() : Promise.reject(`HTTP ${res.status}`))
             .then(data => {
                 if (data.success) {
+                    // 🔄 ОБНОВЛЯЕМ живое состояние корзины
+                    currentCart = data.cart;
+
+                    // Обновляем счётчик в шапке
                     const countEl = document.getElementById('cart-count');
                     if (countEl) {
                         countEl.style.transform = 'scale(1.3)';
@@ -83,9 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 150);
                     }
 
-                    // Обновляем только нужные компоненты
-                    if (document.querySelector('.cart-page')) updateCartPage(data.cart);
-                    if (document.querySelector('.menu-grid')) renderMenuWidgets(data.cart, id); // ← передаём ID изменённого товара
+                    // Обновляем компоненты только если они есть на странице
+                    if (document.querySelector('.cart-page')) updateCartPage(currentCart);
+                    if (document.querySelector('.menu-grid')) renderMenuWidgets(currentCart, id);
                 } else {
                     console.error('🔴 Ответ сервера:', data);
                 }
@@ -103,11 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🔹 Обновление таблицы корзины
     function updateCartPage(cart) {
         const totalEl = document.getElementById('cart-total');
-        let totalSum = 0;
-
-        for (const item of Object.values(cart)) {
-            totalSum += parseFloat(item.price) * item.quantity;
-        }
+        let totalSum = Object.values(cart).reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
         if (totalEl) totalEl.textContent = `${Math.round(totalSum)} ₽`;
 
         if (Object.keys(cart).length === 0) {
@@ -117,22 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="empty-cart" style="grid-column:1/-1;text-align:center;padding:60px;">
             <div style="font-size:64px;margin-bottom:20px;">🛒</div>
             <h3>Корзина пуста</h3>
-            <a href="/catalog/menu/" class="btn-primary" style="display:inline-block;width:auto;padding:12px 28px;">Перейти в меню</a>
+            <a href="/" class="btn-primary" style="display:inline-block;width:auto;padding:12px 28px;">Перейти в меню</a>
           </div>`;
             }
             return;
         }
 
-        // Удаляем строки, которых нет в новой корзине
         document.querySelectorAll('.cart-table tbody tr[data-id]').forEach(row => {
             if (!cart[row.dataset.id]) row.remove();
         });
 
-        // Обновляем или создаём строки
         for (const [pid, item] of Object.entries(cart)) {
             let row = document.querySelector(`.cart-table tbody tr[data-id="${pid}"]`);
             const lineTotal = (parseFloat(item.price) * item.quantity).toFixed(0);
-
             if (row) {
                 row.querySelector('.qty').textContent = item.quantity;
                 row.querySelector('.line-total').textContent = `${lineTotal} ₽`;
@@ -140,26 +138,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 row = document.createElement('tr');
                 row.dataset.id = pid;
                 row.innerHTML = `
-          <td><div class="cart-item-info">
-            ${item.image ? `<img src="${item.image}" class="cart-item-img">` : `<div class="cart-item-img placeholder-cart">🍔</div>`}
-            <span class="cart-item-name">${item.name}</span>
-          </div></td>
+          <td><div class="cart-item-info">${item.image ? `<img src="${item.image}" class="cart-item-img">` : `<div class="cart-item-img placeholder-cart">🍔</div>`}<span class="cart-item-name">${item.name}</span></div></td>
           <td class="price-col">${Math.round(parseFloat(item.price))} ₽</td>
-          <td><div class="qty-control">
-            <button class="qty-btn" data-action="remove" data-id="${pid}">−</button>
-            <span class="qty">${item.quantity}</span>
-            <button class="qty-btn" data-action="add" data-id="${pid}">+</button>
-          </div></td>
+          <td><div class="qty-control"><button class="qty-btn" data-action="remove" data-id="${pid}">−</button><span class="qty">${item.quantity}</span><button class="qty-btn" data-action="add" data-id="${pid}">+</button></div></td>
           <td class="line-total">${lineTotal} ₽</td>
           <td><button class="remove-btn" data-id="${pid}">✕</button></td>`;
-                document.querySelector('.cart-table tbody').appendChild(row);
+                document.querySelector('.cart-table tbody')?.appendChild(row);
             }
         }
     }
-    
-    // 🔹 Обновление виджетов в меню (ИСПРАВЛЕНО)
+
+    // 🔹 Обновление виджетов в меню (работает с текущим состоянием currentCart)
     function renderMenuWidgets(cart, changedId = null) {
-        // 1️⃣ Обновляем или создаём виджеты для товаров, которые ЕСТЬ в корзине
         for (const [pid, item] of Object.entries(cart)) {
             const control = document.querySelector(`.menu-qty-control[data-id="${pid}"]`);
             const addBtn = document.querySelector(`.add-to-cart-btn[data-id="${pid}"]`);
@@ -167,20 +157,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (qty > 0) {
                 if (addBtn && !control) {
-                    // Создаём новый виджет
                     const wrapper = document.createElement('div');
                     wrapper.className = 'menu-qty-control';
                     wrapper.dataset.id = pid;
-                    wrapper.innerHTML = `
-            <button class="menu-qty-btn" data-action="remove">−</button>
-            <span class="menu-qty-val">${qty}</span>
-            <button class="menu-qty-btn" data-action="add">+</button>`;
+                    wrapper.innerHTML = `<button class="menu-qty-btn" data-action="remove">−</button><span class="menu-qty-val">${qty}</span><button class="menu-qty-btn" data-action="add">+</button>`;
                     addBtn.replaceWith(wrapper);
                 } else if (control) {
                     const valEl = control.querySelector('.menu-qty-val');
                     if (valEl) {
                         valEl.textContent = qty;
-                        // 🎯 Анимация ТОЛЬКО для изменённого элемента
                         if (pid === changedId) {
                             valEl.style.transform = 'scale(1.2)';
                             valEl.style.transition = 'transform 0.15s ease';
@@ -190,20 +175,75 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 }
+            } else {
+                if (control) {
+                    const btn = document.createElement('button');
+                    btn.className = 'add-to-cart-btn';
+                    btn.dataset.id = pid;
+                    btn.textContent = 'В корзину';
+                    control.replaceWith(btn);
+                }
             }
         }
-
-        // 2️⃣ 🔥 Убираем виджеты у товаров, которых НЕТ в корзине (количество стало 0)
+        // Убираем "осиротевшие" виджеты (количество упало до 0)
         document.querySelectorAll('.menu-qty-control').forEach(control => {
-            const pid = control.dataset.id;
-            // Если товара больше нет в ответе сервера
-            if (!cart[pid] || (cart[pid] && parseInt(cart[pid].quantity) === 0)) {
+            if (!cart[control.dataset.id] || parseInt(cart[control.dataset.id]?.quantity) === 0) {
                 const btn = document.createElement('button');
                 btn.className = 'add-to-cart-btn';
-                btn.dataset.id = pid;
+                btn.dataset.id = control.dataset.id;
                 btn.textContent = 'В корзину';
                 control.replaceWith(btn);
             }
         });
     }
+
+    // 🔹 Инициализация фильтрации без перезагрузки
+    function initCategoryFilter() {
+        document.querySelectorAll('.filter-btn').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                link.classList.add('active');
+
+                const grid = document.querySelector('.menu-grid');
+                if (grid) {
+                    grid.classList.add('filtering');
+                    grid.style.minHeight = grid.offsetHeight + 'px';
+                }
+
+                try {
+                    const res = await fetch(link.href, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+                    const html = await res.text();
+                    const parser = new DOMParser();
+                    const newGrid = parser.parseFromString(html, 'text/html').querySelector('.menu-grid');
+
+                    if (newGrid && grid) {
+                        grid.style.opacity = '0';
+                        setTimeout(() => {
+                            grid.innerHTML = newGrid.innerHTML;
+
+                            // 🔑 СБРОС фиксирующей высоты (была главная причина растягивания)
+                            grid.style.minHeight = '';
+                            grid.style.height = '';
+
+                            void grid.offsetHeight; // принудительный рефлоу
+                            grid.style.opacity = '1';
+                            grid.classList.remove('filtering');
+                            history.pushState({}, '', link.href);
+                            renderMenuWidgets(currentCart);
+                        }, 200);
+                    }
+                } catch (err) {
+                    console.error('❌ Ошибка фильтрации:', err);
+                    window.location.href = link.href;
+                }
+            });
+        });
+    }
+
+    // Запуск фильтрации
+    initCategoryFilter();
+
+    // Обработка кнопок "Назад/Вперёд" в браузере
+    window.addEventListener('popstate', () => location.reload());
 });

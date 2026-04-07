@@ -29,4 +29,9 @@ def menu(request):
         'active_category': category_slug,  # Для подсветки активной кнопки
         'search_query': search_query,
     }
+
+    # 🔥 Если запрос AJAX — возвращаем только фрагмент сетки
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render(request, 'catalog/_menu_grid.html', context)
+
     return render(request, 'catalog/index.html', context)
