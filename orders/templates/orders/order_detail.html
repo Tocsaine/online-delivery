@@ -1,0 +1,105 @@
+{% extends 'catalog/base.html' %}
+{% block content %}
+    <div class="container cart-page">
+        <div style="max-width: 700px; margin: 0 auto;">
+
+            <!-- Заголовок заказа -->
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 class="cart-title">Заказ #{{ order.pk }}</h2>
+                <span class="order-status-badge {{ order.status }}">{{ order.get_status_display }}</span>
+                <p style="color: var(--text-muted); margin-top: 10px;">
+                    📅 {{ order.created_at|date:"d.m.Y в H:i" }}
+                </p>
+            </div>
+
+            <!-- Карточка заказа -->
+            <div class="order-detail-card">
+
+                <!-- Позиции заказа (как в чеке) -->
+                <h3>📦 Состав заказа</h3>
+                <table class="order-items-table" style="table-layout: fixed; width: 100%;">
+                    <thead>
+                    <tr>
+                        <th style="width: 50%; text-align: left; padding-left: 8px;">Блюдо</th>
+                        <th style="width: 15%; text-align: right;">Цена</th>
+                        <th style="width: 12%; text-align: center;">Кол-во</th>
+                        <th style="width: 23%; text-align: right; padding-right: 8px;">Итого</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in order.items.all %}
+                        <tr>
+                            <td style="width: 50%; vertical-align: middle; padding: 12px 8px;">
+                                <div class="order-item-cell">
+                                    {% if item.product and item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}"
+                                             class="order-item-img">
+                                    {% else %}
+                                        <div class="order-item-img placeholder">🍔</div>
+                                    {% endif %}
+                                    <span class="order-item-name">
+                        {% if item.product %}
+                            {{ item.product.name }}
+                        {% else %}
+                            <span style="color: var(--text-muted); font-style: italic;">[Удалено]</span>
+                        {% endif %}
+                    </span>
+                                </div>
+                            </td>
+                            <td style="width: 15%; text-align: right; vertical-align: middle; padding: 12px 8px; font-variant-numeric: tabular-nums;">
+                                {{ item.price|floatformat:0 }} ₽
+                            </td>
+                            <td style="width: 12%; text-align: center; vertical-align: middle; padding: 12px 8px; font-variant-numeric: tabular-nums;">
+                                × {{ item.quantity }}
+                            </td>
+                            <td style="width: 15%; text-align: right; vertical-align: middle; padding: 12px 8px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums;">
+                                {{ item.get_total|floatformat:0 }} ₽
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Итого и адрес -->
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span>Подытог:</span>
+                        <span>{{ order.total|floatformat:0 }} ₽</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Доставка:</span>
+                        <span>Бесплатно</span>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 10px 0;">
+                    <div class="summary-row total">
+                        <span><strong>К оплате:</strong></span>
+                        <span><strong>{{ order.total|floatformat:0 }} ₽</strong></span>
+                    </div>
+                </div>
+
+                <!-- Адрес доставки -->
+                <div class="delivery-address">
+                    <h4>📍 Адрес доставки</h4>
+                    <p>{{ order.address|linebreaksbr }}</p>
+                </div>
+
+                <!-- Контактные данные -->
+                <div class="contact-info">
+                    <h4>👤 Контактное лицо</h4>
+                    <p><strong>{{ order.customer_name }}</strong><br>
+                        📞 {{ order.phone }}</p>
+                </div>
+
+            </div>
+
+            <!-- Кнопки действий -->
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="{% url 'accounts:account' %}" class="btn-primary"
+                   style="display: inline-block; width: auto; padding: 12px 28px;">
+                    ← Вернуться в профиль
+                </a>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}

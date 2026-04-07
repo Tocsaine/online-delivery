@@ -7,6 +7,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // Сразу рендерим виджеты для начального состояния
     renderMenuWidgets(currentCart);
 
+    // ⏱️ Утилита: задержка выполнения (debounce)
+    function debounce(func, delay) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => func(...args), delay);
+        };
+    }
+
+// 🌐 Единая функция загрузки и рендера сетки меню (ПРОСТАЯ И СТАБИЛЬНАЯ)
+    async function fetchAndRenderMenu(url) {
+        const grid = document.querySelector('.menu-grid');
+        if (!grid) return;
+
+        // 🔒 Сохраняем текущую позицию прокрутки
+        const scrollY = window.scrollY;
+
+        // Показываем легкое затемнение (без схлопывания высоты)
+        grid.style.pointerEvents = 'none';
+        grid.style.opacity = '0.7';
+
+        try {
+            const res = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const newGrid = doc.querySelector('.menu-grid');
+
+            if (newGrid) {
+                // Мгновенная замена контента
+                grid.innerHTML = newGrid.innerHTML;
+
+                // 🔄 Перерисовываем виджеты корзины
+                renderMenuWidgets(currentCart);
+            }
+        } catch (err) {
+            console.error('❌ Ошибка загрузки меню:', err);
+        } finally {
+            // ✅ Восстанавливаем скролл — это главный фикс против "скачков"
+            window.scrollTo({top: scrollY, behavior: 'auto'});
+
+            // Возвращаем интерактивность
+            grid.style.pointerEvents = '';
+            grid.style.opacity = '';
+        }
+    }
+
     // 🔹 Безопасное получение CSRF-токена
     function getCSRFToken() {
         const name = 'csrftoken';
@@ -205,44 +251,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                 link.classList.add('active');
 
-                const grid = document.querySelector('.menu-grid');
-                if (grid) {
-                    grid.classList.add('filtering');
-                    grid.style.minHeight = grid.offsetHeight + 'px';
-                }
-
-                try {
-                    const res = await fetch(link.href, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
-                    const html = await res.text();
-                    const parser = new DOMParser();
-                    const newGrid = parser.parseFromString(html, 'text/html').querySelector('.menu-grid');
-
-                    if (newGrid && grid) {
-                        grid.style.opacity = '0';
-                        setTimeout(() => {
-                            grid.innerHTML = newGrid.innerHTML;
-
-                            // 🔑 СБРОС фиксирующей высоты (была главная причина растягивания)
-                            grid.style.minHeight = '';
-                            grid.style.height = '';
-
-                            void grid.offsetHeight; // принудительный рефлоу
-                            grid.style.opacity = '1';
-                            grid.classList.remove('filtering');
-                            history.pushState({}, '', link.href);
-                            renderMenuWidgets(currentCart);
-                        }, 200);
-                    }
-                } catch (err) {
-                    console.error('❌ Ошибка фильтрации:', err);
-                    window.location.href = link.href;
-                }
+                await fetchAndRenderMenu(link.href);
+                history.pushState({}, '', link.href);
             });
         });
     }
 
-    // Запуск фильтрации
+    function initSearch() {
+        const input = document.getElementById('search-input');
+        if (!input) return;
+
+        const handleInput = debounce(async (e) => {
+            const query = e.target.value.trim();
+
+            // Определяем активную категорию
+            const activeFilter = document.querySelector('.filter-btn.active');
+            const catHref = activeFilter ? activeFilter.getAttribute('href') : '';
+            const catMatch = catHref.match(/category=([^&]+)/);
+            const category = catMatch ? catMatch[1] : '';
+
+            // Формируем URL
+            let url = '/';
+            const params = new URLSearchParams();
+            if (query) params.set('search', query);
+            if (category) params.set('category', category);
+            if (params.toString()) url += '?' + params.toString();
+
+            // Если поле очищено → сбрасываем поиск, оставляем только фильтр категории (или всё меню)
+            if (!query) {
+                const resetUrl = category ? `/?category=${category}` : '/';
+                await fetchAndRenderMenu(resetUrl);
+                history.replaceState({}, '', resetUrl);
+            } else {
+                await fetchAndRenderMenu(url);
+                history.replaceState({}, '', url);
+            }
+        }, 400); // 400мс задержка перед запросом
+
+        input.addEventListener('input', handleInput);
+    }
+
+// Запуск при загрузке
     initCategoryFilter();
+    initSearch();
 
     // Обработка кнопок "Назад/Вперёд" в браузере
     window.addEventListener('popstate', () => location.reload());

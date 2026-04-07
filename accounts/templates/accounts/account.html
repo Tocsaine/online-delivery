@@ -1,38 +1,44 @@
 {% extends 'catalog/base.html' %}
 {% block content %}
-<div class="container cart-page">
-    <h2 class="cart-title">👤 Личный кабинет</h2>
+    <div class="container cart-page">
+        <h2 class="cart-title">👤 Личный кабинет</h2>
 
-    <div class="auth-form" style="margin: 0; width: 100%; max-width: 100%;">
-        <h3 style="margin-bottom: 10px;">Привет, {{ user.username }}!</h3>
-        <p style="color: var(--text-muted); margin-bottom: 30px;">Email: {{ user.email|default:"Не указан" }}</p>
+        <div class="auth-form" style="margin: 0; width: 100%; max-width: 100%;">
+            <h3 style="margin-bottom: 10px;">Привет, {{ user.username }}!</h3>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Email: {{ user.email|default:"Не указан" }}</p>
 
-        <h3 style="margin-bottom: 15px;">📦 История заказов</h3>
+            <h3 style="margin-bottom: 15px;">📦 История заказов</h3>
 
-        {% if orders %}
-        <div class="orders-list">
-            {% for order in orders %}
-            <div class="order-card">
-                <div class="order-header">
-                    <span class="order-id">Заказ #{{ order.pk }}</span>
-                    <span class="order-status {{ order.status }}">{{ order.get_status_display }}</span>
+            {% if orders %}
+                <div class="orders-list">
+                    {% for order in orders %}
+                        <a href="{% url 'orders:detail' order.pk %}" class="order-card-link">
+                            <div class="order-card">
+                                <div class="order-header">
+                                    <span class="order-id">#{{ order.pk }}</span>
+                                    <span class="order-status {{ order.status }}">{{ order.get_status_display }}</span>
+                                </div>
+                                <div class="order-body">
+                                    <span class="order-date">📅 {{ order.created_at|date:"d.m.Y H:i" }}</span>
+                                    <span class="order-total">💰 {{ order.total|floatformat:0 }} ₽</span>
+                                </div>
+                                <div class="order-address">
+                                    📍 {{ order.address|truncatechars:45 }}
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
                 </div>
-                <div class="order-body">
-                    <p>📅 {{ order.created_at|date:"d.m.Y H:i" }}</p>
-                    <p>💰 {{ order.total|floatformat:0 }} ₽</p>
-                    <p>📍 {{ order.address|truncatechars:40 }}</p>
+            {% else %}
+                <div class="empty-state"
+                     style="text-align: center; padding: 40px; background: #F8F9FA; border-radius: 12px;">
+                    <p style="font-size: 40px;">📭</p>
+                    <h4>У вас пока нет заказов</h4>
+                    <p style="color: var(--text-muted); margin-bottom: 15px;">Самое время попробовать наше меню!</p>
+                    <a href="{% url 'catalog:menu' %}" class="btn-primary"
+                       style="display: inline-block; width: auto; padding: 10px 20px;">Перейти в меню</a>
                 </div>
-            </div>
-            {% endfor %}
+            {% endif %}
         </div>
-        {% else %}
-        <div class="empty-state" style="text-align: center; padding: 40px; background: #F8F9FA; border-radius: 12px;">
-            <p style="font-size: 40px;">📭</p>
-            <h4>У вас пока нет заказов</h4>
-            <p style="color: var(--text-muted); margin-bottom: 15px;">Самое время попробовать наше меню!</p>
-            <a href="{% url 'catalog:menu' %}" class="btn-primary" style="display: inline-block; width: auto; padding: 10px 20px;">Перейти в меню</a>
-        </div>
-        {% endif %}
     </div>
-</div>
 {% endblock %}

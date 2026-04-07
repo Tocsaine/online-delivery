@@ -16,7 +16,7 @@
     <!-- Поиск -->
     <form method="get" action="{% url 'catalog:menu' %}" class="search-form">
         <span class="search-icon">🔍</span>
-        <input type="search" name="search" placeholder="Что желаете? (например, бургер)" class="search-input" value="{{ search_query }}">
+        <input type="search" id="search-input" name="search" placeholder="Что желаете? (например, бургер)" class="search-input" value="{{ search_query }}">
         <button type="submit" class="search-btn">Найти</button>
 
         {% if active_category %}

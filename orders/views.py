@@ -1,5 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from cart import utils as cart_utils
 from .models import Order, OrderItem
 from decimal import Decimal
@@ -43,3 +44,15 @@ def checkout(request):
 def success(request, order_id):
     order = Order.objects.get(pk=order_id)
     return render(request, 'orders/success.html', {'order': order})
+
+
+@login_required
+def order_detail(request, order_id):
+    """Страница деталей заказа — доступна только владельцу"""
+    order = get_object_or_404(Order, pk=order_id, user=request.user)
+
+    # Если заказ не принадлежит пользователю — редирект в профиль
+    if order.user != request.user:
+        return redirect('accounts:account')
+
+    return render(request, 'orders/order_detail.html', {'order': order})

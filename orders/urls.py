@@ -5,4 +5,5 @@ app_name = 'orders'
 urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('success/<int:order_id>/', views.success, name='success'),
+    path('detail/<int:order_id>/', views.order_detail, name='detail'),  # ← НОВЫЙ МАРШРУТ
 ]
