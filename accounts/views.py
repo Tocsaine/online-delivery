@@ -11,6 +11,12 @@ def register(request):
         form = CustomRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
+
+            # 🔥 ЖЕСТКОЕ СОХРАНЕНИЕ ТЕЛЕФОНА В ПРОФИЛЬ
+            # Обращаемся к связанному профилю и обновляем поле
+            user.profile.phone = form.cleaned_data.get('phone')
+            user.profile.save()
+
             login(request, user)
             messages.success(request, "Аккаунт успешно создан!")
             return redirect('catalog:menu')
@@ -46,5 +52,26 @@ def user_logout(request):
 
 @login_required
 def account(request):
+    profile = request.user.profile
     orders = request.user.orders.all().order_by('-created_at')[:10]
-    return render(request, 'accounts/account.html', {'orders': orders})
+
+    # Обработка обновления профиля
+    if request.method == 'POST':
+        user = request.user
+
+        # 1. Сохраняем Email (это поле встроенной модели User)
+        new_email = request.POST.get('email', '').strip()
+        if new_email:
+            user.email = new_email
+            user.save()
+
+        # 2. Сохраняем Телефон (это поле нашей модели Profile)
+        new_phone = request.POST.get('phone', '').strip()
+        if new_phone:
+            profile.phone = new_phone
+            profile.save()
+
+        messages.success(request, "Данные профиля обновлены!")
+        return redirect('accounts:account')  # Перезагружаем страницу, чтобы увидеть новые данные
+
+    return render(request, 'accounts/account.html', {'orders': orders, 'profile': profile})

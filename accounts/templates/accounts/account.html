@@ -1,29 +1,89 @@
 {% extends 'catalog/base.html' %}
 {% block content %}
     <div class="container cart-page">
-        <h2 class="cart-title">👤 Личный кабинет</h2>
+        <div style="max-width: 700px; margin: 0 auto;">
 
-        <div class="auth-form" style="margin: 0; width: 100%; max-width: 100%;">
-            <h3 style="margin-bottom: 10px;">Привет, {{ user.username }}!</h3>
-            <p style="color: var(--text-muted); margin-bottom: 30px;">Email: {{ user.email|default:"Не указан" }}</p>
+            <h2 class="cart-title">👤 Профиль</h2>
 
-            <h3 style="margin-bottom: 15px;">📦 История заказов</h3>
+            <!-- 📝 Карточка профиля -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <h3>Контактные данные</h3>
+                    <button type="button" id="edit-btn" class="btn-edit" onclick="toggleEdit()">
+                        Изменить
+                    </button>
+                </div>
+
+                <form method="post" id="profile-form">
+                    {% csrf_token %}
+
+                    <div class="profile-fields">
+                        <div class="profile-field">
+                            <label class="field-label">Email</label>
+                            <input type="email" name="email" id="email-field"
+                                   class="profile-input"
+                                   value="{{ user.email }}"
+                                   readonly>
+                        </div>
+
+                        <div class="profile-field">
+                            <label class="field-label">Телефон</label>
+                            <input type="tel" name="phone" id="phone-field"
+                                   class="profile-input"
+                                   value="{{ profile.phone }}"
+                                   readonly>
+                        </div>
+                    </div>
+
+                    <div class="profile-actions" id="profile-actions" style="display: none;">
+                        <button type="button" class="btn-cancel" onclick="cancelEdit()">Отмена</button>
+                        <button type="submit" class="btn-save">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;">
+            <h3 style="margin-bottom: 12px; font-size: 18px;">📦 История заказов</h3>
 
             {% if orders %}
                 <div class="orders-list">
                     {% for order in orders %}
                         <a href="{% url 'orders:detail' order.pk %}" class="order-card-link">
                             <div class="order-card">
-                                <div class="order-header">
-                                    <span class="order-id">#{{ order.pk }}</span>
-                                    <span class="order-status {{ order.status }}">{{ order.get_status_display }}</span>
+                                <!-- Верхняя строка: номер, статус -->
+                                <div class="order-top-row">
+                                    <span class="order-number">#{{ order.pk }}</span>
+                                    <span class="order-status-badge {{ order.status }}">{{ order.get_status_display }}</span>
                                 </div>
-                                <div class="order-body">
-                                    <span class="order-date">📅 {{ order.created_at|date:"d.m.Y H:i" }}</span>
+
+                                <!-- Средняя строка: дата и сумма -->
+                                <div class="order-middle-row">
+                                    <span class="order-date">📅 {{ order.created_at|date:"d.m.Y, H:i" }}</span>
                                     <span class="order-total">💰 {{ order.total|floatformat:0 }} ₽</span>
                                 </div>
-                                <div class="order-address">
-                                    📍 {{ order.address|truncatechars:45 }}
+
+                                <!-- Нижняя часть: товары с фото + адрес -->
+                                <div class="order-bottom-row">
+                                    <div class="order-items-preview">
+                                        {% for item in order.items.all|slice:":3" %}
+                                            <div class="order-item-thumb">
+                                                {% if item.product and item.product.image %}
+                                                    <img src="{{ item.product.image.url }}"
+                                                         alt="{{ item.product.name }}">
+                                                {% else %}
+                                                    <div class="order-item-thumb-placeholder">🍔</div>
+                                                {% endif %}
+                                                <span class="item-qty">×{{ item.quantity }}</span>
+                                            </div>
+                                        {% endfor %}
+                                        {% if order.items.all.count > 3 %}
+                                            <div class="order-more-items">+{{ order.items.all.count|add:"-3" }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="order-address">
+                                        📍 {{ order.address|truncatechars:40 }}
+                                    </div>
                                 </div>
                             </div>
                         </a>
@@ -41,4 +101,43 @@
             {% endif %}
         </div>
     </div>
+
+    <script>
+        function toggleEdit() {
+            const emailField = document.getElementById('email-field');
+            const phoneField = document.getElementById('phone-field');
+            const editBtn = document.getElementById('edit-btn');
+            const actions = document.getElementById('profile-actions');
+
+            // Разблокируем поля
+            emailField.readOnly = false;
+            phoneField.readOnly = false;
+
+            // Показываем кнопки действий
+            actions.style.display = 'flex';
+
+            // Скрываем кнопку редактирования
+            editBtn.style.display = 'none';
+
+            // Фокус на первое поле
+            emailField.focus();
+        }
+
+        function cancelEdit() {
+            const emailField = document.getElementById('email-field');
+            const phoneField = document.getElementById('phone-field');
+            const editBtn = document.getElementById('edit-btn');
+            const actions = document.getElementById('profile-actions');
+
+            // Блокируем поля
+            emailField.readOnly = true;
+            phoneField.readOnly = true;
+
+            // Скрываем кнопки действий
+            actions.style.display = 'none';
+
+            // Показываем кнопку редактирования
+            editBtn.style.display = 'inline-flex';
+        }
+    </script>
 {% endblock %}

@@ -32,6 +32,10 @@ def checkout(request):
 
         final_address = ""
 
+        if phone and phone != profile.phone:
+            profile.phone = phone
+            profile.save()
+
         if address_id == 'new':
             final_address = new_address_text
             if save_address_check and final_address:
