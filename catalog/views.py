@@ -6,7 +6,7 @@ from django.http import JsonResponse
 
 def menu(request):
     # Получаем все активные категории для фильтра
-    categories = Category.objects.filter(is_active=True)
+    categories = Category.objects.filter(is_active=True).order_by('order', 'name')
 
     # Получаем выбранный фильтр из query-параметра
     category_slug = request.GET.get('category')
@@ -23,10 +23,18 @@ def menu(request):
     # Применяем фильтр, если категория выбрана
     if category_slug:
         items = items.filter(category__slug=category_slug)
+        categories = categories.filter(slug=category_slug)
+
+    grouped_items = {}
+    for category in categories:
+        cat_items = [item for item in items if item.category_id == category.id]
+        if cat_items:  # Показываем только категории с товарами
+            grouped_items[category] = cat_items
 
     context = {
         'categories': categories,
         'items': items,
+        'grouped_items': grouped_items,
         'active_category': category_slug,  # Для подсветки активной кнопки
         'search_query': search_query,
     }

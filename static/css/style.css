@@ -1220,7 +1220,6 @@ textarea.form-control {
 .summary-row.total {
     font-size: 18px;
     padding-top: 10px;
-    border-top: 1px solid #ddd;
     margin-top: 10px;
 }
 
@@ -1993,10 +1992,65 @@ body {
 }
 
 .main-content {
-    flex: 1 0 auto;  /* Растягивается, занимая всё свободное место */
+    flex: 1 0 auto; /* Растягивается, занимая всё свободное место */
 }
 
 .site-footer {
-    flex-shrink: 0;  /* Запрещаем футеру сжиматься */
+    flex-shrink: 0; /* Запрещаем футеру сжиматься */
     margin-top: auto; /* Гарантированно прижимаем к низу */
+}
+
+/* 🔥 Заголовок категории (минимализм слева) */
+.category-header {
+    grid-column: 1 / -1; /* Растягиваем на всю ширину сетки */
+    margin: 16px 0 10px 0; /* Комфортные отступы между секциями */
+    padding: 0;
+}
+
+.category-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--secondary);
+    margin: 0;
+    display: block; /* Просто текст, без фона, теней и скруглений */
+}
+
+.category-divider {
+    display: none; /* Полностью скрываем линии */
+}
+
+/* Скрываем карточки, которые не соответствуют фильтру (для плавности) */
+.menu-card[data-category]:not([data-category=""]) {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* 🔥 Тонкий скроллбар поверх контента (не сдвигает вёрстку) */
+html {
+    scrollbar-width: thin; /* Firefox: тонкий скролл */
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent; /* Firefox: полупрозрачный */
+}
+
+html::-webkit-scrollbar {
+    width: 4px; /* Совсем тонкий */
+}
+
+html::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2); /* Почти невидимый */
+    border-radius: 2px;
+}
+
+/* 🔧 Отступ от кнопки "Вернуться в профиль" до футера */
+.cart-page .btn-primary:last-child,
+.order-detail .btn-primary,
+.main-content .btn-primary:last-of-type {
+    margin-bottom: 30px; /* 👈 Регулируй это значение */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+}
+
+/* 🔧 Отступ внизу списка заказов в профиле */
+.orders-list {
+    padding-bottom: 30px; /* 👈 Регулируй значение под себя */
 }

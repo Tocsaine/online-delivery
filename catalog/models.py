@@ -6,6 +6,8 @@ class Category(models.Model):
     slug = models.SlugField("Слаг", max_length=100, unique=True)
     is_active = models.BooleanField("Активна", default=True)
 
+    order = models.PositiveIntegerField("Порядок", default=0, help_text="Меньшее число = выше в списке")
+
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"

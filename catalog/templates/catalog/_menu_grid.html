@@ -1,27 +1,31 @@
 <div class="menu-grid">
-    {% for item in items %}
-        <div class="menu-card" data-item-id="{{ item.id }}">
+    {% for category, items in grouped_items.items %}
 
-            <!-- 🔥 КЛИКАБЕЛЬНАЯ ЗОНА -->
-            <div class="card-clickable">
-                {% if item.image %}
-                    <img src="{{ item.image.url }}" alt="{{ item.name }}" class="card-image">
-                {% else %}
-                    <div class="placeholder-img">🍔</div>
-                {% endif %}
-                <div class="card-body">
-                    <h3 class="card-title">{{ item.name }}</h3>
-                    <p class="card-desc">{{ item.description|truncatechars:90 }}</p>
+        <div class="category-header" id="cat-{{ category.slug }}">
+            <h3 class="category-title">{{ category.name }}</h3>
+            <span class="category-divider"></span>
+        </div>
+
+        {% for item in items %}
+            <div class="menu-card" data-item-id="{{ item.id }}" data-category="{{ category.slug }}">
+                <div class="card-clickable">
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="card-image">
+                    {% else %}
+                        <div class="placeholder-img">🍔</div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h3 class="card-title">{{ item.name }}</h3>
+                        <p class="card-desc">{{ item.description|truncatechars:90 }}</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="card-price">{{ item.price|floatformat:0 }} <span>₽</span></div>
+                    <button class="add-to-cart-btn" data-id="{{ item.id }}">В корзину</button>
                 </div>
             </div>
+        {% endfor %}
 
-            <!-- 🔥 НЕКЛИКАБЕЛЬНАЯ ЗОНА: только кнопка корзины -->
-            <div class="card-footer">
-                <div class="card-price">{{ item.price|floatformat:0 }} <span>₽</span></div>
-                <button class="add-to-cart-btn" data-id="{{ item.id }}">В корзину</button>
-            </div>
-
-        </div>
     {% empty %}
         <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">
             <p style="font-size:40px;">🕸️</p>
