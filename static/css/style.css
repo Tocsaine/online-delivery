@@ -1741,17 +1741,26 @@ textarea.form-control {
     margin: 0;
 }
 
+/* 🔘 Кнопка "Добавить в корзину" */
 .modal-add-to-cart {
-    margin-top: 16px;
-    padding: 16px;
+    height: 56px; /* 🔑 Точно такая же, как у контейнера */
+    width: 100%;
+    max-width: 280px;
+    padding: 0 24px;
     background: var(--primary);
     color: white;
     border: none;
-    border-radius: 16px;
+    border-radius: 16px; /* 🔑 Одинаковые скругления */
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     transition: all 0.2s;
+    box-sizing: border-box; /* 🔑 Учитываем padding в высоте */
+    line-height: 1; /* Убираем базовый line-height шрифта */
 }
 
 .modal-add-to-cart:hover {
@@ -1764,6 +1773,7 @@ textarea.form-control {
     background: #ccc;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
 }
 
 @keyframes fadeIn {
@@ -1897,4 +1907,65 @@ textarea.form-control {
     .nutrition-label {
         font-size: 10px;
     }
+}
+
+/* 🔥 Контейнер действий в модалке */
+.modal-actions {
+    margin-top: 16px;
+    width: 100%;
+    min-height: 56px; /* 🔑 Жёсткая высота, предотвращает прыжок */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* Запрещаем сжиматься */
+}
+
+/* 🔢 Контроллер количества в модалке */
+.modal-qty-control {
+    height: 56px; /* 🔑 Точно такая же высота */
+    width: 100%;
+    max-width: 280px;
+    padding: 0;
+    background: #F8F9FA;
+    border-radius: 16px; /* 🔑 Одинаковые скругления */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    box-sizing: border-box; /* 🔑 Границы и паддинги внутри высоты */
+}
+
+.modal-qty-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: white;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.15s ease;
+    color: var(--secondary);
+}
+
+.modal-qty-btn:hover {
+    background: #f0f0f0;
+    transform: scale(1.05);
+}
+
+.modal-qty-btn:active {
+    transform: scale(0.95);
+}
+
+.modal-qty-val {
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 32px;
+    text-align: center;
+    color: var(--primary);
+    line-height: 1; /* 🔑 Убираем лишний вертикальный отступ текста */
 }

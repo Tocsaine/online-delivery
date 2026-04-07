@@ -23,70 +23,91 @@ document.addEventListener('DOMContentLoaded', () => {
     async function openItemModal(itemId) {
         currentModalItemId = itemId;
         const modal = document.getElementById('item-modal');
-        const btn = document.getElementById('modal-add-btn');
-
         if (!modal) return;
 
-        // Показываем модалку
+        // 🔥 1. СБРОС СОСТОЯНИЯ: возвращаем кнопку по умолчанию перед загрузкой
+        const actionsContainer = document.getElementById('modal-actions');
+        if (actionsContainer) {
+            actionsContainer.innerHTML = `
+        <button class="modal-add-to-cart" id="modal-add-btn" data-modal-action="add">
+          🛒 Добавить в корзину
+        </button>
+      `;
+        }
+
         modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Блокируем скролл страницы
+        document.body.style.overflow = 'hidden';
 
         try {
-            // 🔥 Загружаем данные через API
             const res = await fetch(`/api/item/${itemId}/`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
 
-            // Заполняем данные
-            document.getElementById('modal-title').textContent = data.name;
-            document.getElementById('modal-price').textContent = `${data.price.toFixed(0)} ₽`;
-            document.getElementById('modal-description').textContent = data.description;
-            document.getElementById('modal-category').textContent = data.category;
+            // 🔥 2. Безопасная функция обновления (не крашится, если элемента нет)
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
 
-            // Полное описание (показываем только если есть)
+            // Заполняем основные данные
+            setText('modal-title', data.name);
+            setText('modal-price', `${data.price.toFixed(0)} ₽`);
+            setText('modal-description', data.description);
+            setText('modal-category', data.category);
+
             const fullDescSection = document.getElementById('modal-full-desc-section');
-            if (data.full_description) {
-                document.getElementById('modal-full-description').textContent = data.full_description;
-                fullDescSection.style.display = 'block';
-            } else {
-                fullDescSection.style.display = 'none';
+            if (fullDescSection) {
+                if (data.full_description) {
+                    setText('modal-full-description', data.full_description);
+                    fullDescSection.style.display = 'block';
+                } else {
+                    fullDescSection.style.display = 'none';
+                }
             }
 
-            // Вес (показываем только если > 0)
-            const weightSection = document.getElementById('modal-weight-section');
-            if (data.weight && data.weight > 0) {
-                document.getElementById('modal-weight').textContent = `${data.weight} г`;
-                weightSection.style.display = 'block';
-            } else {
-                weightSection.style.display = 'none';
-            }
-
+            // КБЖУ
             const nutritionSection = document.getElementById('modal-nutrition-section');
-            if (data.calories > 0 || data.proteins > 0 || data.fats > 0 || data.carbs > 0) {
-                document.getElementById('modal-calories').textContent = data.calories;
-                document.getElementById('modal-proteins').textContent = data.proteins;
-                document.getElementById('modal-fats').textContent = data.fats;
-                document.getElementById('modal-carbs').textContent = data.carbs;
-                nutritionSection.style.display = 'block';
-            } else {
-                nutritionSection.style.display = 'none';
+            if (nutritionSection) {
+                if (data.calories > 0 || data.proteins > 0 || data.fats > 0 || data.carbs > 0) {
+                    setText('modal-calories', data.calories);
+                    setText('modal-proteins', data.proteins);
+                    setText('modal-fats', data.fats);
+                    setText('modal-carbs', data.carbs);
+                    nutritionSection.style.display = 'block';
+                } else {
+                    nutritionSection.style.display = 'none';
+                }
+            }
+
+            // Вес
+            const weightSection = document.getElementById('modal-weight-section');
+            if (weightSection) {
+                if (data.weight && data.weight > 0) {
+                    setText('modal-weight', `${data.weight} г`);
+                    weightSection.style.display = 'block';
+                } else {
+                    weightSection.style.display = 'none';
+                }
             }
 
             // Изображение
             const img = document.getElementById('modal-img');
             const placeholder = document.getElementById('modal-img-placeholder');
             if (data.image) {
-                img.src = data.image;
-                img.style.display = 'block';
-                placeholder.style.display = 'none';
+                if (img) {
+                    img.src = data.image;
+                    img.style.display = 'block';
+                }
+                if (placeholder) placeholder.style.display = 'none';
             } else {
-                img.style.display = 'none';
-                placeholder.style.display = 'flex';
+                if (img) img.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'flex';
             }
 
-            // Кнопка
-            btn.textContent = 'Добавить в корзину';
-            btn.disabled = false;
+            // 🔥 3. Проверяем корзину и рисуем нужный интерфейс (+/- или кнопку)
+            const itemInCart = currentCart[itemId];
+            const currentQty = itemInCart ? parseInt(itemInCart.quantity) : 0;
+            updateModalCartUI(currentQty);
 
         } catch (err) {
             console.error('❌ Ошибка модалки:', err);
@@ -106,35 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function addToCartFromModal() {
         if (!currentModalItemId) return;
-
         const btn = document.getElementById('modal-add-btn');
-        btn.disabled = true;
-        btn.textContent = '⏳ Добавляем...';
-
-        try {
-            const csrfToken = getCSRFToken();
-            const res = await fetch('/cart/update/', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
-                body: JSON.stringify({action: 'add', id: currentModalItemId})
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                btn.textContent = '✅ Добавлено!';
-                setTimeout(() => {
-                    closeItemModal();
-                    // Обновляем счётчик и виджеты
-                    const countEl = document.getElementById('cart-count');
-                    if (countEl) countEl.textContent = data.count;
-                    if (document.querySelector('.menu-grid')) renderMenuWidgets(data.cart);
-                }, 800);
-            }
-        } catch (err) {
-            console.error('❌ Ошибка добавления:', err);
-            btn.disabled = false;
-            btn.textContent = '🛒 Добавить в корзину';
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '⏳ Добавляем...';
         }
+        // Просто вызываем общую функцию. Модалка останется открытой.
+        updateCart('add', currentModalItemId);
     }
 
     // 🔥 ПРОБРАСЫВАЕМ ФУНКЦИИ В ГЛОБАЛЬНУЮ ОБЛАСТЬ (для inline-обработчиков и после AJAX)
@@ -230,6 +229,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 🔥 Обновление интерфейса корзины внутри модалки
+    function updateModalCartUI(qty) {
+        const container = document.getElementById('modal-actions');
+        if (!container) return;
+
+        if (qty > 0) {
+            container.innerHTML = `
+        <div class="modal-qty-control">
+          <button class="modal-qty-btn" onclick="handleModalQty('remove')">−</button>
+          <span class="modal-qty-val">${qty}</span>
+          <button class="modal-qty-btn" onclick="handleModalQty('add')">+</button>
+        </div>
+      `;
+        } else {
+            container.innerHTML = `
+        <button class="modal-add-to-cart" id="modal-add-btn" data-modal-action="add">
+          Добавить в корзину
+        </button>
+      `;
+        }
+    }
+
+    // 🔥 Глобальный обработчик кликов по +/- в модалке
+    window.handleModalQty = function (action) {
+        if (currentModalItemId) {
+            updateCart(action, currentModalItemId);
+        }
+    };
+
     // ========================================
     // 🔹 Отправка запроса в корзину (без изменений)
     // ========================================
@@ -256,6 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 if (data.success) {
                     currentCart = data.cart;
+
+                    // Обновляем счётчик в шапке
                     const countEl = document.getElementById('cart-count');
                     if (countEl) {
                         countEl.style.transform = 'scale(1.3)';
@@ -264,8 +294,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             countEl.style.transform = 'scale(1)';
                         }, 150);
                     }
+
+                    // Обновляем страницу корзины и виджеты меню
                     if (document.querySelector('.cart-page')) updateCartPage(currentCart);
                     if (document.querySelector('.menu-grid')) renderMenuWidgets(currentCart, id);
+
+                    // 🔥 ОБНОВЛЯЕМ МОДАЛКУ, ЕСЛИ ОНА ОТКРЫТА ДЛЯ ЭТОГО ТОВАРА
+                    if (currentModalItemId && String(currentModalItemId) === String(id)) {
+                        const qty = currentCart[id] ? parseInt(currentCart[id].quantity) : 0;
+                        updateModalCartUI(qty);
+                    }
+                } else {
+                    console.error('🔴 Ответ сервера:', data);
                 }
             })
             .catch(err => console.error('🔴 Ошибка:', err))
