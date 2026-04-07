@@ -7,21 +7,59 @@
             <form method="post" class="auth-form" style="margin: 0; width: 100%;">
                 {% csrf_token %}
 
+                <!-- 1. Имя -->
                 <div class="form-group">
-                    <label for="name">Ваше имя</label>
-                    <input type="text" id="name" name="name" class="form-control" placeholder="Иван Иванов" required>
+                    <label>Ваше имя</label>
+                    <input type="text" name="name" class="form-control"
+                           value="{{ user.get_full_name|default:user.username }}" required>
                 </div>
 
+                <!-- 2. Телефон -->
                 <div class="form-group">
-                    <label for="phone">Телефон</label>
-                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="+7 (999) 000-00-00"
-                           required>
+                    <label>Телефон</label>
+                    <input type="tel" name="phone" class="form-control"
+                           value="{{ profile.phone }}" placeholder="+7 (999) 000-00-00" required>
                 </div>
 
+                <!-- 3. Умный выбор адреса -->
                 <div class="form-group">
-                    <label for="address">Адрес доставки</label>
-                    <textarea id="address" name="address" class="form-control" rows="3"
-                              placeholder="Улица, дом, квартира, подъезд" required></textarea>
+                    <label>Адрес доставки</label>
+
+                    <!-- Обёртка для кастомной стрелки -->
+                    <div class="address-select-wrapper">
+                        <select name="address_id" id="address-select" class="custom-address-select"
+                                onchange="toggleAddressInput()">
+
+                            <!-- Вариант 1: Последний заказ -->
+                            {% if last_address %}
+                                <option value="last" selected>{{ last_address }}</option>
+                            {% endif %}
+
+                            <!-- Вариант 2: Остальные сохраненные адреса -->
+                            {% for addr in saved_addresses %}
+                                {% if addr.text != last_address %}
+                                    <option value="{{ addr.pk }}">{{ addr.text }}</option>
+                                {% endif %}
+                            {% endfor %}
+
+                            <!-- Вариант 3: Новый адрес -->
+                            <option value="new" {% if not last_address %}selected{% endif %}>Ввести новый адрес</option>
+                        </select>
+                    </div>
+
+                    <!-- Поле ввода нового адреса -->
+                    <textarea name="address" id="address-textarea" class="form-control" rows="3"
+                              placeholder="Улица, дом, квартира..."
+                              style="margin-top: 10px; {% if last_address %}display: none;{% endif %}"
+                              required></textarea>
+
+                    <!-- Галочка сохранения -->
+                    <div id="save-address-block"
+                         style="margin-top: 10px; display: {% if last_address %}none{% else %}flex{% endif %}; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
+                        <input type="checkbox" name="save_address" id="save_address" style="width: auto;">
+                        <label for="save_address" style="margin: 0; cursor: pointer;">Сохранить этот адрес для будущих
+                            заказов</label>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-primary">Подтвердить заказ</button>
@@ -30,10 +68,25 @@
             <div class="cart-summary" style="text-align: left; height: fit-content;">
                 <h3 style="margin-bottom: 15px;">Ваш заказ</h3>
                 <p style="font-size: 28px; font-weight: 800; margin-bottom: 15px;">{{ total|floatformat:0 }} ₽</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 15px 0;">
-                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">💳 Оплата при получении<br>🚚
-                    Доставка 30–45 минут<br>📞 Курьер позвонит за 5 мин до приезда</p>
             </div>
         </div>
     </div>
+
+    <script>
+        function toggleAddressInput() {
+            const select = document.getElementById('address-select');
+            const textarea = document.getElementById('address-textarea');
+            const saveBlock = document.getElementById('save-address-block');
+
+            if (select.value === 'new') {
+                textarea.style.display = 'block';
+                textarea.required = true;
+                saveBlock.style.display = 'flex';
+            } else {
+                textarea.style.display = 'none';
+                textarea.required = false;
+                saveBlock.style.display = 'none';
+            }
+        }
+    </script>
 {% endblock %}

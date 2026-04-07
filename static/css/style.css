@@ -1319,3 +1319,78 @@ textarea.form-control {
 .col-price, .col-qty, .col-total {
     font-variant-numeric: tabular-nums;
 }
+
+/* 🎨 Контейнер для селектора адреса */
+.address-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* 🎨 Стиль для селектора адреса */
+.custom-address-select {
+    width: 100%;
+    padding: 14px 50px 14px 16px; /* Увеличил отступ справа до 50px */
+    border: 2px solid #E0E0E0;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    background-color: white;
+    cursor: pointer;
+    color: var(--secondary);
+    font-family: var(--font-main);
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    transition: border-color 0.2s;
+}
+
+.custom-address-select:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 94, 0, 0.1);
+}
+
+/* 🎯 CSS-стрелка на белом фоне */
+.address-select-wrapper::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    background: white; /* Белый фон, чтобы перекрывать текст */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* Рисуем стрелку внутри белого квадрата */
+.address-select-wrapper::before {
+    content: '';
+    position: absolute;
+    right: 22px;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #8A8A8A;
+    border-bottom: 2px solid #8A8A8A;
+    pointer-events: none;
+    z-index: 2; /* Поверх белого фона */
+    transition: border-color 0.2s;
+}
+
+/* Меняем цвет стрелки при фокусе */
+.address-select-wrapper:focus-within::before {
+    border-color: var(--primary);
+}
+
+/* Опции выпадающего списка */
+.custom-address-select option {
+    padding: 10px;
+    background: white;
+    color: var(--secondary);
+}
