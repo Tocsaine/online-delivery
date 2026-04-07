@@ -1,3 +1,4 @@
+import json
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
@@ -41,4 +42,4 @@ def cart_count(request):
     cart = utils.get_cart(request)
     count = utils.get_cart_count(cart)
     print(f"DEBUG CART COUNT: {count}, session: {request.session.get('cart')}")
-    return {'cart_count': utils.get_cart_count(cart)}
+    return {'cart_count': utils.get_cart_count(cart), 'initial_cart_json': json.dumps(cart)}

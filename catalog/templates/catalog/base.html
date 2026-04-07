@@ -66,6 +66,10 @@
 <!-- Кнопка "Наверх" -->
 <button id="scroll-to-top" title="Наверх">↑</button>
 
+
+<script>
+    window.INITIAL_CART = {{ initial_cart_json|default:'{}'|safe }}
+</script>
 <!-- Скрипты -->
 <script src="{% static 'js/app.js' %}"></script>
 <script src="{% static 'js/ui.js' %}"></script>
