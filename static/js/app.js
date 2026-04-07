@@ -14,6 +14,49 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    const phoneInputs = document.querySelectorAll('.phone-mask');
+
+    phoneInputs.forEach(input => {
+        input.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, ''); // Убираем все не-цифры
+            let formattedValue = '';
+
+            // Если пусто, ставим +7
+            if (!value) {
+                e.target.value = '';
+                return;
+            }
+
+            // Всегда начинаем с 7 (если пользователь ввел 8, меняем на 7)
+            if (['7', '8', '9'].indexOf(value[0]) > -1) {
+                if (value[0] === '9') value = '7' + value; // Если начали с 9
+                value = '7' + value.substring(1); // Гарантируем, что первая цифра 7
+            }
+
+            // Форматирование: +7 (XXX) XXX-XX-XX
+            if (value.length > 0) formattedValue = '+7';
+            if (value.length > 1) formattedValue += ' (' + value.substring(1, 4);
+            if (value.length >= 5) formattedValue += ') ' + value.substring(4, 7);
+            if (value.length >= 8) formattedValue += '-' + value.substring(7, 9);
+            if (value.length >= 10) formattedValue += '-' + value.substring(9, 11);
+
+            e.target.value = formattedValue;
+        });
+
+        // Очистка при фокусе (если там только "+7")
+        input.addEventListener('focus', function (e) {
+            if (e.target.value === '+7') e.target.value = '';
+        });
+
+        // Восстановление префикса при уходе (blur)
+        input.addEventListener('blur', function (e) {
+            if (e.target.value === '') e.target.value = '+7';
+        });
+
+        // Устанавливаем начальное значение
+        if (!input.value) input.value = '+7';
+    });
+
     // ========================================
     // 🔥 ФУНКЦИИ МОДАЛЬНОГО ОКНА (внутри DOMContentLoaded)
     // ========================================

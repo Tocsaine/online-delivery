@@ -20,7 +20,7 @@ class CustomRegistrationForm(UserCreationForm):
         label="Телефон",
         max_length=20,
         required=True,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'form-control phone-mask', 'inputmode': 'numeric', 'autocomplete': 'tel'})
     )
     password1 = forms.CharField(
         label="Пароль",

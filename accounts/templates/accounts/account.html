@@ -29,9 +29,9 @@
                         <div class="profile-field">
                             <label class="field-label">Телефон</label>
                             <input type="tel" name="phone" id="phone-field"
-                                   class="profile-input"
-                                   value="{{ profile.phone }}"
-                                   readonly>
+                                   class="profile-input phone-mask"
+                                   value="{{ profile.phone|default:'+7' }}"
+                                   readonly required inputmode="numeric" autocomplete="tel">
                         </div>
                     </div>
 

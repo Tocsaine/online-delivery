@@ -17,9 +17,9 @@
                 <!-- 2. Телефон -->
                 <div class="form-group">
                     <label>Телефон</label>
-                    <input type="tel" name="phone" class="form-control"
-                           value="{{ profile.phone }}"
-                           placeholder="+7 (999) 000-00-00" required>
+                    <input type="tel" name="phone" class="form-control phone-mask"
+                           value="{{ profile.phone|default:'+7' }}"
+                           placeholder="+7 (999) 000-00-00" required inputmode="numeric" autocomplete="tel">
                 </div>
 
                 <!-- 3. Умный выбор адреса -->
