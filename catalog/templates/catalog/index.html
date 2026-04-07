@@ -2,85 +2,160 @@
 {% load static %}
 
 {% block content %}
-<!-- Hero секция -->
-<div class="hero-banner">
-    <div class="container">
-        <h1>Голоден? Доставим за 30 минут! 🚀</h1>
-        <p>Сочные бургеры, горячая пицца и хрустящие наггетсы.</p>
+    <!-- Hero секция -->
+    <div class="hero-banner">
+        <div class="container">
+            <h1>Голоден? Доставим за 30 минут! 🚀</h1>
+            <p>Сочные бургеры, горячая пицца и хрустящие наггетсы.</p>
+        </div>
     </div>
-</div>
 
-<div class="container page-header">
-    <h2 class="page-title">Наше меню</h2>
+    <div class="container page-header">
+        <h2 class="page-title">Наше меню</h2>
 
-    <!-- Поиск -->
-    <form method="get" action="{% url 'catalog:menu' %}" class="search-form">
-        <span class="search-icon">🔍</span>
-        <input type="search" id="search-input" name="search" placeholder="Что желаете? (например, бургер)" class="search-input" value="{{ search_query }}">
-        <button type="submit" class="search-btn">Найти</button>
+        <!-- Поиск -->
+        <form method="get" action="{% url 'catalog:menu' %}" class="search-form">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="search-input" name="search" placeholder="Что желаете? (например, бургер)"
+                   class="search-input" value="{{ search_query }}">
+            <button type="submit" class="search-btn">Найти</button>
 
-        {% if active_category %}
-            <input type="hidden" name="category" value="{{ active_category }}">
-        {% endif %}
-    </form>
-
-    <!-- Фильтры -->
-    <div class="category-filter">
-        <a href="?{% if search_query %}search={{ search_query|urlencode }}{% endif %}"
-           class="filter-btn {% if not active_category %}active{% endif %}">
-            Все меню
-        </a>
-        {% for cat in categories %}
-        <a href="?category={{ cat.slug }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}"
-           class="filter-btn {% if active_category == cat.slug %}active{% endif %}">
-            {{ cat.name }}
-        </a>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- Сетка товаров -->
-<div class="container">
-    <div class="menu-grid">
-        {% for item in items %}
-        <div class="menu-card">
-            {% if item.image %}
-                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="card-image">
-            {% else %}
-                <div class="placeholder-img">🍔</div>
+            {% if active_category %}
+                <input type="hidden" name="category" value="{{ active_category }}">
             {% endif %}
+        </form>
 
-            <div class="card-body">
-                <h3 class="card-title">{{ item.name }}</h3>
-                <p class="card-desc">{{ item.description|truncatechars:90 }}</p>
+        <!-- Фильтры -->
+        <div class="category-filter">
+            <a href="?{% if search_query %}search={{ search_query|urlencode }}{% endif %}"
+               class="filter-btn {% if not active_category %}active{% endif %}">
+                Все меню
+            </a>
+            {% for cat in categories %}
+                <a href="?category={{ cat.slug }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}"
+                   class="filter-btn {% if active_category == cat.slug %}active{% endif %}">
+                    {{ cat.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
 
-                <div class="card-footer">
-                    <div class="card-price">{{ item.price|floatformat:0 }} <span>₽</span></div>
-                    <button class="add-to-cart-btn" data-id="{{ item.id }}">В корзину</button>
+    <!-- Сетка товаров -->
+    <div class="container">
+        <div class="menu-grid">
+            {% for item in items %}
+                <div class="menu-card" data-item-id="{{ item.id }}">
+
+                    <!-- 🔥 КЛИКАБЕЛЬНАЯ ЗОНА: фото + текст (открывает модалку) -->
+                    <div class="card-clickable">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="card-image">
+                        {% else %}
+                            <div class="placeholder-img">🍔</div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h3 class="card-title">{{ item.name }}</h3>
+                            <p class="card-desc">{{ item.description|truncatechars:90 }}</p>
+                        </div>
+                    </div>
+
+                    <!-- 🔥 НЕКЛИКАБЕЛЬНАЯ ЗОНА: только кнопка корзины -->
+                    <div class="card-footer">
+                        <div class="card-price">{{ item.price|floatformat:0 }} <span>₽</span></div>
+                        <button class="add-to-cart-btn" data-id="{{ item.id }}">В корзину</button>
+                    </div>
+
+                </div>
+            {% empty %}
+                <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #888;">
+                    <p style="font-size: 40px;">🕸️</p>
+                    <h3>Ничего не найдено</h3>
+                    <p>Попробуйте изменить запрос или категорию.</p>
+                    <a href="{% url 'catalog:menu' %}" style="color: var(--primary); font-weight: 600;">Сбросить всё</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 🔥 Модальное окно товара -->
+    <div id="item-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" data-modal-action="close" aria-label="Закрыть">×</button>
+
+            <div class="modal-body">
+                <div class="modal-image">
+                    <img id="modal-img" src="" alt="">
+                    <div id="modal-img-placeholder">🍕</div>
+                </div>
+
+                <div class="modal-info">
+                    <div class="modal-category" id="modal-category"></div>
+                    <h2 class="modal-title" id="modal-title"></h2>
+                    <div class="modal-price" id="modal-price"></div>
+
+                    <div class="modal-section">
+                        <h4>Описание</h4>
+                        <p id="modal-description" class="modal-text"></p>
+                    </div>
+
+                    <div class="modal-section" id="modal-full-desc-section">
+                        <h4>Подробнее</h4>
+                        <p id="modal-full-description" class="modal-text"></p>
+                    </div>
+
+                    <div class="modal-section" id="modal-weight-section">
+                        <h4>Вес</h4>
+                        <p id="modal-weight" class="modal-text"></p>
+                    </div>
+
+                    <div class="modal-section" id="modal-nutrition-section">
+                        <h4>Пищевая ценность</h4>
+                        <div class="nutrition-grid">
+                            <div class="nutrition-item">
+                                <span class="nutrition-value" id="modal-calories">0</span>
+                                <span class="nutrition-label">ккал</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-value" id="modal-proteins">0</span>
+                                <span class="nutrition-label">белки</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-value" id="modal-fats">0</span>
+                                <span class="nutrition-label">жиры</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <span class="nutrition-value" id="modal-carbs">0</span>
+                                <span class="nutrition-label">углеводы</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="modal-add-to-cart" id="modal-add-btn" data-modal-action="add">
+                        Добавить в корзину
+                    </button>
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #888;">
-            <p style="font-size: 40px;">🕸️</p>
-            <h3>Ничего не найдено</h3>
-            <p>Попробуйте изменить запрос или категорию.</p>
-            <a href="{% url 'catalog:menu' %}" style="color: var(--primary); font-weight: 600;">Сбросить всё</a>
-        </div>
-        {% endfor %}
     </div>
-</div>
 
-<style>
-    /* Hero стили прямо здесь для простоты */
-    .hero-banner {
-        background: linear-gradient(135deg, #FF5E00 0%, #FF9A00 100%);
-        color: white;
-        padding: 60px 0;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-    .hero-banner h1 { font-size: 36px; margin-bottom: 10px; }
-    .hero-banner p { opacity: 0.9; font-size: 18px; }
-</style>
+    <style>
+        /* Hero стили прямо здесь для простоты */
+        .hero-banner {
+            background: linear-gradient(135deg, #FF5E00 0%, #FF9A00 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .hero-banner h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .hero-banner p {
+            opacity: 0.9;
+            font-size: 18px;
+        }
+    </style>
 {% endblock %}

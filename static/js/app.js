@@ -1,13 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🟢 app.js инициализирован');
 
-    // 🔑 ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ: живое зеркало корзины на клиенте
+    // 🔑 ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ
     let currentCart = window.INITIAL_CART || {};
-
-    // Сразу рендерим виджеты для начального состояния
     renderMenuWidgets(currentCart);
 
-    // ⏱️ Утилита: задержка выполнения (debounce)
+    // ⏱️ Debounce утилита
     function debounce(func, delay) {
         let timer;
         return (...args) => {
@@ -16,79 +14,158 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-// 🌐 Единая функция загрузки и рендера сетки меню (ПРОСТАЯ И СТАБИЛЬНАЯ)
-    async function fetchAndRenderMenu(url) {
-        const grid = document.querySelector('.menu-grid');
-        if (!grid) return;
+    // ========================================
+    // 🔥 ФУНКЦИИ МОДАЛЬНОГО ОКНА (внутри DOMContentLoaded)
+    // ========================================
 
-        // 🔒 Сохраняем текущую позицию прокрутки
-        const scrollY = window.scrollY;
+    let currentModalItemId = null;
 
-        // Показываем легкое затемнение (без схлопывания высоты)
-        grid.style.pointerEvents = 'none';
-        grid.style.opacity = '0.7';
+    async function openItemModal(itemId) {
+        currentModalItemId = itemId;
+        const modal = document.getElementById('item-modal');
+        const btn = document.getElementById('modal-add-btn');
+
+        if (!modal) return;
+
+        // Показываем модалку
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Блокируем скролл страницы
 
         try {
-            const res = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
-            const html = await res.text();
-            const doc = new DOMParser().parseFromString(html, 'text/html');
-            const newGrid = doc.querySelector('.menu-grid');
+            // 🔥 Загружаем данные через API
+            const res = await fetch(`/api/item/${itemId}/`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
 
-            if (newGrid) {
-                // Мгновенная замена контента
-                grid.innerHTML = newGrid.innerHTML;
+            // Заполняем данные
+            document.getElementById('modal-title').textContent = data.name;
+            document.getElementById('modal-price').textContent = `${data.price.toFixed(0)} ₽`;
+            document.getElementById('modal-description').textContent = data.description;
+            document.getElementById('modal-category').textContent = data.category;
 
-                // 🔄 Перерисовываем виджеты корзины
-                renderMenuWidgets(currentCart);
+            // Полное описание (показываем только если есть)
+            const fullDescSection = document.getElementById('modal-full-desc-section');
+            if (data.full_description) {
+                document.getElementById('modal-full-description').textContent = data.full_description;
+                fullDescSection.style.display = 'block';
+            } else {
+                fullDescSection.style.display = 'none';
             }
-        } catch (err) {
-            console.error('❌ Ошибка загрузки меню:', err);
-        } finally {
-            // ✅ Восстанавливаем скролл — это главный фикс против "скачков"
-            window.scrollTo({top: scrollY, behavior: 'auto'});
 
-            // Возвращаем интерактивность
-            grid.style.pointerEvents = '';
-            grid.style.opacity = '';
+            // Вес (показываем только если > 0)
+            const weightSection = document.getElementById('modal-weight-section');
+            if (data.weight && data.weight > 0) {
+                document.getElementById('modal-weight').textContent = `${data.weight} г`;
+                weightSection.style.display = 'block';
+            } else {
+                weightSection.style.display = 'none';
+            }
+
+            const nutritionSection = document.getElementById('modal-nutrition-section');
+            if (data.calories > 0 || data.proteins > 0 || data.fats > 0 || data.carbs > 0) {
+                document.getElementById('modal-calories').textContent = data.calories;
+                document.getElementById('modal-proteins').textContent = data.proteins;
+                document.getElementById('modal-fats').textContent = data.fats;
+                document.getElementById('modal-carbs').textContent = data.carbs;
+                nutritionSection.style.display = 'block';
+            } else {
+                nutritionSection.style.display = 'none';
+            }
+
+            // Изображение
+            const img = document.getElementById('modal-img');
+            const placeholder = document.getElementById('modal-img-placeholder');
+            if (data.image) {
+                img.src = data.image;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else {
+                img.style.display = 'none';
+                placeholder.style.display = 'flex';
+            }
+
+            // Кнопка
+            btn.textContent = 'Добавить в корзину';
+            btn.disabled = false;
+
+        } catch (err) {
+            console.error('❌ Ошибка модалки:', err);
+            closeItemModal();
+            alert('Не удалось загрузить информацию о товаре');
         }
     }
 
-    // 🔹 Безопасное получение CSRF-токена
+    function closeItemModal() {
+        const modal = document.getElementById('item-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = ''; // Разблокируем скролл
+        }
+        currentModalItemId = null;
+    }
+
+    async function addToCartFromModal() {
+        if (!currentModalItemId) return;
+
+        const btn = document.getElementById('modal-add-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Добавляем...';
+
+        try {
+            const csrfToken = getCSRFToken();
+            const res = await fetch('/cart/update/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+                body: JSON.stringify({action: 'add', id: currentModalItemId})
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                btn.textContent = '✅ Добавлено!';
+                setTimeout(() => {
+                    closeItemModal();
+                    // Обновляем счётчик и виджеты
+                    const countEl = document.getElementById('cart-count');
+                    if (countEl) countEl.textContent = data.count;
+                    if (document.querySelector('.menu-grid')) renderMenuWidgets(data.cart);
+                }, 800);
+            }
+        } catch (err) {
+            console.error('❌ Ошибка добавления:', err);
+            btn.disabled = false;
+            btn.textContent = '🛒 Добавить в корзину';
+        }
+    }
+
+    // 🔥 ПРОБРАСЫВАЕМ ФУНКЦИИ В ГЛОБАЛЬНУЮ ОБЛАСТЬ (для inline-обработчиков и после AJAX)
+    window.openItemModal = openItemModal;
+    window.closeItemModal = closeItemModal;
+    window.addToCartFromModal = addToCartFromModal;
+
+    // Закрытие по Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeItemModal();
+    });
+
+    // ========================================
+    // 🔹 CSRF Token
+    // ========================================
     function getCSRFToken() {
         const name = 'csrftoken';
         const cookies = document.cookie.split(';');
         for (let i = 0; i < cookies.length; i++) {
             const cookie = cookies[i].trim();
-            if (cookie.startsWith(name + '=')) {
-                return decodeURIComponent(cookie.substring(name.length + 1));
-            }
+            if (cookie.startsWith(name + '=')) return decodeURIComponent(cookie.substring(name.length + 1));
         }
         return null;
     }
 
-    // 🔹 Единый слушатель кликов
+    // ========================================
+    // 🔹 Единый делегированный обработчик кликов
+    // ========================================
     document.addEventListener('click', (e) => {
-        const addBtn = e.target.closest('.add-to-cart-btn');
-        if (addBtn) {
-            e.preventDefault();
-            updateCart('add', addBtn.dataset.id);
-            return;
-        }
 
-        const qtyBtn = e.target.closest('.qty-btn');
-        if (qtyBtn) {
-            e.preventDefault();
-            updateCart(qtyBtn.dataset.action, qtyBtn.dataset.id);
-            return;
-        }
-
-        const removeBtn = e.target.closest('.remove-btn');
-        if (removeBtn) {
-            e.preventDefault();
-            updateCart('delete', removeBtn.dataset.id);
-            return;
-        }
-
+        // 1. Кнопки +/- в меню (виджет количества)
         const menuQtyBtn = e.target.closest('.menu-qty-btn');
         if (menuQtyBtn) {
             e.preventDefault();
@@ -96,9 +173,66 @@ document.addEventListener('DOMContentLoaded', () => {
             if (control) updateCart(menuQtyBtn.dataset.action, control.dataset.id);
             return;
         }
+
+        // 2. Кнопка "В корзину" (в меню и в модалке)
+        const addBtn = e.target.closest('.add-to-cart-btn, #modal-add-btn');
+        if (addBtn) {
+            e.preventDefault();
+            // Если это кнопка в модалке
+            if (addBtn.id === 'modal-add-btn') {
+                addToCartFromModal();
+            } else {
+                updateCart('add', addBtn.dataset.id);
+            }
+            return;
+        }
+
+        // 3. Крестик удаления в корзине
+        const removeBtn = e.target.closest('.remove-btn');
+        if (removeBtn) {
+            e.preventDefault();
+            updateCart('delete', removeBtn.dataset.id);
+            return;
+        }
+
+        // 4. Кнопки +/- в таблице корзины
+        const cartQtyBtn = e.target.closest('.qty-btn');
+        if (cartQtyBtn) {
+            e.preventDefault();
+            updateCart(cartQtyBtn.dataset.action, cartQtyBtn.dataset.id);
+            return;
+        }
+
+        // 5. 🔥 Клик по кликабельной зоне карточки → открываем модалку
+        const clickableZone = e.target.closest('.card-clickable');
+        if (clickableZone) {
+            e.preventDefault();
+            const card = clickableZone.closest('.menu-card');
+            if (card && card.dataset.itemId) {
+                openItemModal(card.dataset.itemId);
+            }
+            return;
+        }
+
+        // 6. 🔥 Обработчики модального окна (закрытие по крестику или фону)
+        const modalClose = e.target.closest('[data-modal-action="close"]');
+        if (modalClose) {
+            e.preventDefault();
+            closeItemModal();
+            return;
+        }
+
+        const modalOverlay = e.target.closest('#item-modal');
+        if (modalOverlay && e.target === modalOverlay) {
+            e.preventDefault();
+            closeItemModal();
+            return;
+        }
     });
 
-    // 🔹 Отправка запроса на сервер
+    // ========================================
+    // 🔹 Отправка запроса в корзину (без изменений)
+    // ========================================
     function updateCart(action, id) {
         const csrfToken = getCSRFToken();
         if (!csrfToken) {
@@ -121,10 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.ok ? res.json() : Promise.reject(`HTTP ${res.status}`))
             .then(data => {
                 if (data.success) {
-                    // 🔄 ОБНОВЛЯЕМ живое состояние корзины
                     currentCart = data.cart;
-
-                    // Обновляем счётчик в шапке
                     const countEl = document.getElementById('cart-count');
                     if (countEl) {
                         countEl.style.transform = 'scale(1.3)';
@@ -133,12 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             countEl.style.transform = 'scale(1)';
                         }, 150);
                     }
-
-                    // Обновляем компоненты только если они есть на странице
                     if (document.querySelector('.cart-page')) updateCartPage(currentCart);
                     if (document.querySelector('.menu-grid')) renderMenuWidgets(currentCart, id);
-                } else {
-                    console.error('🔴 Ответ сервера:', data);
                 }
             })
             .catch(err => console.error('🔴 Ошибка:', err))
@@ -151,7 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // 🔹 Обновление таблицы корзины
+    // ========================================
+    // 🔹 Обновление таблицы корзины (без изменений)
+    // ========================================
     function updateCartPage(cart) {
         const totalEl = document.getElementById('cart-total');
         let totalSum = Object.values(cart).reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
@@ -160,12 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Object.keys(cart).length === 0) {
             const cartLayout = document.querySelector('.cart-layout');
             if (cartLayout && !document.querySelector('.empty-cart')) {
-                cartLayout.innerHTML = `
-          <div class="empty-cart" style="grid-column:1/-1;text-align:center;padding:60px;">
-            <div style="font-size:64px;margin-bottom:20px;">🛒</div>
-            <h3>Корзина пуста</h3>
-            <a href="/" class="btn-primary" style="display:inline-block;width:auto;padding:12px 28px;">Перейти в меню</a>
-          </div>`;
+                cartLayout.innerHTML = `<div class="empty-cart" style="grid-column:1/-1;text-align:center;padding:60px;"><div style="font-size:64px;margin-bottom:20px;">🛒</div><h3>Корзина пуста</h3><a href="/" class="btn-primary" style="display:inline-block;width:auto;padding:12px 28px;">Перейти в меню</a></div>`;
             }
             return;
         }
@@ -183,22 +307,19 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 row = document.createElement('tr');
                 row.dataset.id = pid;
-                row.innerHTML = `
-          <td><div class="cart-item-info">${item.image ? `<img src="${item.image}" class="cart-item-img">` : `<div class="cart-item-img placeholder-cart">🍔</div>`}<span class="cart-item-name">${item.name}</span></div></td>
-          <td class="price-col">${Math.round(parseFloat(item.price))} ₽</td>
-          <td><div class="qty-control"><button class="qty-btn" data-action="remove" data-id="${pid}">−</button><span class="qty">${item.quantity}</span><button class="qty-btn" data-action="add" data-id="${pid}">+</button></div></td>
-          <td class="line-total">${lineTotal} ₽</td>
-          <td><button class="remove-btn" data-id="${pid}">✕</button></td>`;
+                row.innerHTML = `<td><div class="cart-item-info">${item.image ? `<img src="${item.image}" class="cart-item-img">` : `<div class="cart-item-img placeholder-cart">🍔</div>`}<span class="cart-item-name">${item.name}</span></div></td><td class="price-col">${Math.round(parseFloat(item.price))} ₽</td><td><div class="qty-control"><button class="qty-btn" data-action="remove" data-id="${pid}">−</button><span class="qty">${item.quantity}</span><button class="qty-btn" data-action="add" data-id="${pid}">+</button></div></td><td class="line-total">${lineTotal} ₽</td><td><button class="remove-btn" data-id="${pid}">✕</button></td>`;
                 document.querySelector('.cart-table tbody')?.appendChild(row);
             }
         }
     }
 
-    // 🔹 Обновление виджетов в меню (работает с текущим состоянием currentCart)
+    // ========================================
+    // 🔹 Обновление виджетов в меню (без изменений)
+    // ========================================
     function renderMenuWidgets(cart, changedId = null) {
         for (const [pid, item] of Object.entries(cart)) {
             const control = document.querySelector(`.menu-qty-control[data-id="${pid}"]`);
-            const addBtn = document.querySelector(`.add-to-cart-btn[data-id="${pid}"]`);
+            const addBtn = document.querySelector(`.card-footer .add-to-cart-btn[data-id="${pid}"]`);
             const qty = parseInt(item.quantity) || 0;
 
             if (qty > 0) {
@@ -231,26 +352,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-        // Убираем "осиротевшие" виджеты (количество упало до 0)
+
         document.querySelectorAll('.menu-qty-control').forEach(control => {
-            if (!cart[control.dataset.id] || parseInt(cart[control.dataset.id]?.quantity) === 0) {
-                const btn = document.createElement('button');
-                btn.className = 'add-to-cart-btn';
-                btn.dataset.id = control.dataset.id;
-                btn.textContent = 'В корзину';
-                control.replaceWith(btn);
+            const pid = control?.dataset?.id;
+            if (!pid || !cart[pid] || parseInt(cart[pid]?.quantity) === 0) {
+                const footer = control?.closest('.menu-card')?.querySelector('.card-footer');
+                if (footer) {
+                    const btn = document.createElement('button');
+                    btn.className = 'add-to-cart-btn';
+                    btn.dataset.id = pid;
+                    btn.textContent = 'В корзину';
+                    control.replaceWith(btn);
+                }
             }
         });
     }
 
-    // 🔹 Инициализация фильтрации без перезагрузки
+    // ========================================
+    // 🔹 Фильтрация и поиск (без изменений)
+    // ========================================
+    async function fetchAndRenderMenu(url) {
+        const grid = document.querySelector('.menu-grid');
+        if (!grid) return;
+        const scrollY = window.scrollY;
+        grid.style.pointerEvents = 'none';
+        grid.style.opacity = '0.7';
+        try {
+            const res = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const newGrid = doc.querySelector('.menu-grid');
+            if (newGrid) {
+                grid.innerHTML = newGrid.innerHTML;
+                void grid.offsetHeight;
+                grid.style.opacity = '1';
+                renderMenuWidgets(currentCart);
+            }
+        } catch (err) {
+            console.error('❌ Ошибка фильтрации:', err);
+        } finally {
+            window.scrollTo({top: scrollY, behavior: 'auto'});
+            grid.style.pointerEvents = '';
+            grid.style.opacity = '';
+        }
+    }
+
     function initCategoryFilter() {
         document.querySelectorAll('.filter-btn').forEach(link => {
             link.addEventListener('click', async (e) => {
                 e.preventDefault();
                 document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                 link.classList.add('active');
-
                 await fetchAndRenderMenu(link.href);
                 history.pushState({}, '', link.href);
             });
@@ -260,24 +412,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function initSearch() {
         const input = document.getElementById('search-input');
         if (!input) return;
-
         const handleInput = debounce(async (e) => {
             const query = e.target.value.trim();
-
-            // Определяем активную категорию
             const activeFilter = document.querySelector('.filter-btn.active');
             const catHref = activeFilter ? activeFilter.getAttribute('href') : '';
-            const catMatch = catHref.match(/category=([^&]+)/);
+            const catMatch = catHref?.match(/category=([^&]+)/);
             const category = catMatch ? catMatch[1] : '';
-
-            // Формируем URL
             let url = '/';
             const params = new URLSearchParams();
             if (query) params.set('search', query);
             if (category) params.set('category', category);
             if (params.toString()) url += '?' + params.toString();
-
-            // Если поле очищено → сбрасываем поиск, оставляем только фильтр категории (или всё меню)
             if (!query) {
                 const resetUrl = category ? `/?category=${category}` : '/';
                 await fetchAndRenderMenu(resetUrl);
@@ -286,15 +431,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 await fetchAndRenderMenu(url);
                 history.replaceState({}, '', url);
             }
-        }, 400); // 400мс задержка перед запросом
-
+        }, 400);
         input.addEventListener('input', handleInput);
     }
 
-// Запуск при загрузке
+    // Запуск
     initCategoryFilter();
     initSearch();
-
-    // Обработка кнопок "Назад/Вперёд" в браузере
     window.addEventListener('popstate', () => location.reload());
-});
+
+}); // ← Закрывающая скобка DOMContentLoaded

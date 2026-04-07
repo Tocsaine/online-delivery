@@ -1,26 +1,33 @@
 <div class="menu-grid">
     {% for item in items %}
-    <div class="menu-card">
-        {% if item.image %}
-            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="card-image">
-        {% else %}
-            <div class="placeholder-img">🍔</div>
-        {% endif %}
-        <div class="card-body">
-            <h3 class="card-title">{{ item.name }}</h3>
-            <p class="card-desc">{{ item.description|truncatechars:90 }}</p>
+        <div class="menu-card" data-item-id="{{ item.id }}">
+
+            <!-- 🔥 КЛИКАБЕЛЬНАЯ ЗОНА -->
+            <div class="card-clickable">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}" class="card-image">
+                {% else %}
+                    <div class="placeholder-img">🍔</div>
+                {% endif %}
+                <div class="card-body">
+                    <h3 class="card-title">{{ item.name }}</h3>
+                    <p class="card-desc">{{ item.description|truncatechars:90 }}</p>
+                </div>
+            </div>
+
+            <!-- 🔥 НЕКЛИКАБЕЛЬНАЯ ЗОНА: только кнопка корзины -->
             <div class="card-footer">
                 <div class="card-price">{{ item.price|floatformat:0 }} <span>₽</span></div>
                 <button class="add-to-cart-btn" data-id="{{ item.id }}">В корзину</button>
             </div>
+
         </div>
-    </div>
     {% empty %}
-    <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">
-        <p style="font-size:40px;">🕸️</p>
-        <h3>Ничего не найдено</h3>
-        <p>Попробуйте изменить запрос или категорию.</p>
-        <a href="{% url 'catalog:menu' %}" style="color:var(--primary);font-weight:600;">Сбросить всё</a>
-    </div>
+        <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">
+            <p style="font-size:40px;">🕸️</p>
+            <h3>Ничего не найдено</h3>
+            <p>Попробуйте изменить запрос или категорию.</p>
+            <a href="{% url 'catalog:menu' %}" style="color:var(--primary);font-weight:600;">Сбросить всё</a>
+        </div>
     {% endfor %}
 </div>
