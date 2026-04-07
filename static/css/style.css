@@ -322,15 +322,20 @@ img {
 .card-footer {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-top: auto; /* Прижимаем к низу */
-    padding-top: 8px;
+    align-items: center; /* 🔑 Вертикальное центрирование */
+    padding: 16px;
+    border-top: 1px solid #f0f0f0;
+    background: white;
+    min-height: 56px; /* 🔑 Фиксируем высоту блока */
+    gap: 10px;
 }
 
 .card-price {
     font-size: 18px;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--secondary);
+    line-height: 1; /* 🔑 Убирает базовый вертикальный сдвиг */
+    white-space: nowrap;
 }
 
 .card-price span {
@@ -339,24 +344,36 @@ img {
     color: var(--text-muted);
 }
 
+/* Кнопка "В корзину" */
 .add-to-cart-btn {
+    padding: 0 20px;
     background: var(--primary);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
+    border-radius: 10px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.2s;
+    transition: background 0.2s;
 }
 
 .add-to-cart-btn:hover {
     background: var(--primary-hover);
-    transform: scale(1.05);
 }
 
 .add-to-cart-btn:active {
     transform: scale(0.95);
+}
+
+/* 🔑 Единая высота для кнопки и контроллера */
+.add-to-cart-btn,
+.menu-qty-control {
+    height: 40px; /* 🔑 Одинаковая высота */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0; /* 🔑 Убираем внешние отступы */
+    flex-shrink: 0; /* Запрещаем сжиматься */
 }
 
 /* ========================
@@ -969,34 +986,28 @@ textarea.form-control {
 
 /* 🛒 Мини-контроллер количества в карточке меню */
 .menu-qty-control {
-    display: flex;
-    align-items: center;
+    background: #F8F9FA;
+    border-radius: 10px;
+    padding: 0 6px;
     gap: 8px;
-    background: var(--bg-body);
-    padding: 4px;
-    border-radius: var(--radius-sm);
 }
 
 .menu-qty-btn {
-    background: white;
+    width: 32px;
+    height: 32px;
     border: none;
-    width: 28px;
-    height: 28px;
+    background: white;
     border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
     font-size: 16px;
-    color: var(--secondary);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition: background 0.15s;
 }
 
 .menu-qty-btn:hover {
     background: #e9ecef;
-    transform: scale(1.05);
 }
 
 .menu-qty-btn:active {
@@ -1004,12 +1015,12 @@ textarea.form-control {
 }
 
 .menu-qty-val {
-    font-weight: 700;
     font-size: 15px;
+    font-weight: 700;
     min-width: 24px;
     text-align: center;
-    color: var(--secondary);
-    user-select: none;
+    color: var(--primary);
+    line-height: 1;
 }
 
 /* 🔒 Стабилизация сетки корзины */
