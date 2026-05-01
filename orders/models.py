@@ -1,6 +1,7 @@
 from django.db import models
 from catalog.models import MenuItem
-
+from django.db.models import Q, CheckConstraint
+from encrypted_model_fields.fields import EncryptedCharField, EncryptedTextField
 
 class Order(models.Model):
     user = models.ForeignKey(
@@ -14,8 +15,8 @@ class Order(models.Model):
         ('cancelled', 'Отменён'),
     ]
     customer_name = models.CharField("Имя", max_length=100)
-    phone = models.CharField("Телефон", max_length=20)
-    address = models.TextField("Адрес доставки")
+    phone = EncryptedCharField("Телефон", max_length=20)
+    address = EncryptedTextField("Адрес доставки")
     total = models.DecimalField("Итого", max_digits=10, decimal_places=2)
     status = models.CharField("Статус", max_length=20, choices=STATUS_CHOICES, default='new')
     created_at = models.DateTimeField("Создан", auto_now_add=True)
@@ -25,6 +26,17 @@ class Order(models.Model):
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"
         ordering = ['-created_at']
+        constraints = [
+            CheckConstraint(condition=Q(total__gte=0), name='order_total_non_negative'),
+            CheckConstraint(condition=Q(status__in=['new', 'preparing', 'delivering', 'completed', 'cancelled']),
+                            name='order_status_valid_choice'),
+        ]
+
+        indexes = [
+            models.Index(fields=['user', '-created_at'], name='idx_order_user_created'),
+            models.Index(fields=['status', 'created_at'], name='idx_order_status_created'),
+            models.Index(fields=['phone'], name='idx_order_phone'),
+        ]
 
     def __str__(self):
         return f"Заказ #{self.pk} от {self.customer_name}"
@@ -50,3 +62,12 @@ class OrderItem(models.Model):
     class Meta:
         verbose_name = "Позиция заказа"
         verbose_name_plural = "Позиции заказов"
+        constraints = [
+            CheckConstraint(condition=Q(price__gte=0), name='orderitem_price_non_negative'),
+            CheckConstraint(condition=Q(quantity__gte=1), name='orderitem_quantity_min_1'),
+        ]
+
+        indexes = [
+            models.Index(fields=['order'], name='idx_orderitem_order'),
+            models.Index(fields=['order', 'price'], name='idx_orderitem_order_price'),
+        ]

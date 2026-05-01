@@ -2,11 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from encrypted_model_fields.fields import EncryptedCharField, EncryptedTextField
 
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    phone = models.CharField("Телефон", max_length=20, blank=True)
+    phone = EncryptedCharField("Телефон", max_length=20, blank=True)
 
     # В будущем сюда добавим сохранённые адреса, предпочтения и т.д.
 
@@ -28,7 +29,7 @@ def save_user_profile(sender, instance, **kwargs):
 class Address(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
     label = models.CharField("Название (напр. Дом)", max_length=50, default="Мой адрес")
-    text = models.TextField("Адрес")
+    text = EncryptedTextField("Адрес")
     is_default = models.BooleanField("По умолчанию", default=False)
 
     def __str__(self):
@@ -37,3 +38,10 @@ class Address(models.Model):
     class Meta:
         verbose_name = "Адрес"
         verbose_name_plural = "Адреса"
+
+        indexes = [
+
+            models.Index(fields=['user', 'is_default'], name='idx_address_user_default'),
+
+            models.Index(fields=['text'], name='idx_address_text'),
+        ]

@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q, CheckConstraint
 
 
 class Category(models.Model):
@@ -12,6 +13,14 @@ class Category(models.Model):
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
         ordering = ["name"]
+
+        constraints = [
+            CheckConstraint(condition=Q(order__gte=0), name='category_order_non_negative'),
+        ]
+
+        indexes = [
+            models.Index(fields=['is_active', 'order'], name='idx_category_active_order'),
+        ]
 
     def __str__(self):
         return self.name
@@ -39,6 +48,25 @@ class MenuItem(models.Model):
         verbose_name = "Блюдо"
         verbose_name_plural = "Блюда"
         ordering = ["category", "name"]
+
+        constraints = [
+            CheckConstraint(condition=Q(price__gte=0), name='menuitem_price_non_negative'),
+            CheckConstraint(condition=Q(weight__gte=0), name='menuitem_weight_non_negative'),
+            CheckConstraint(condition=Q(calories__gte=0), name='menuitem_calories_non_negative'),
+            CheckConstraint(condition=Q(proteins__gte=0), name='menuitem_proteins_non_negative'),
+            CheckConstraint(condition=Q(fats__gte=0), name='menuitem_fats_non_negative'),
+            CheckConstraint(condition=Q(carbs__gte=0), name='menuitem_carbs_non_negative'),
+        ]
+
+        indexes = [
+            models.Index(fields=['category', 'is_available'], name='idx_menuitem_cat_available'),
+
+            models.Index(fields=['is_available', 'price'], name='idx_menuitem_available_price'),
+
+            models.Index(fields=['name'], name='idx_menuitem_name'),
+
+            models.Index(fields=['category', 'is_available', '-created_at'], name='idx_menuitem_cat_avail_created'),
+        ]
 
     def __str__(self):
         return self.name
