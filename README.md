@@ -17,7 +17,7 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 Для Linux:
 sudo -u postgres psql
 В консоли psql выполняется следующее:
-CREATE DATABASE fastfood24;
+CREATE DATABASE fastfood24_db;
 ALTER USER postgres WITH PASSWORD 'your_db_password';
 \q
 

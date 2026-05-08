@@ -92,6 +92,14 @@
 
             </div>
 
+            {% if order.status == 'awaiting_confirmation' and order.user == request.user %}
+                <div class="confirm-receipt-wrapper">
+                    <a href="{% url 'orders:confirm_receipt' order.id %}" class="btn-confirm-receipt">
+                        <span>✅</span> Подтвердить получение
+                    </a>
+                </div>
+            {% endif %}
+
             <!-- Кнопки действий -->
             <div style="text-align: center; margin-top: 30px;">
                 <a href="{% url 'accounts:account' %}" class="btn-primary"

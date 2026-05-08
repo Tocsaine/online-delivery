@@ -6,13 +6,19 @@ from encrypted_model_fields.fields import EncryptedCharField, EncryptedTextField
 
 
 class Profile(models.Model):
+    ROLE_CHOICES = [
+        ('client', 'Клиент'),
+        ('courier', "Курьер"),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     phone = EncryptedCharField("Телефон", max_length=20, blank=True)
+    role = models.CharField("Роль", max_length=20, choices=ROLE_CHOICES, default='client')
 
     # В будущем сюда добавим сохранённые адреса, предпочтения и т.д.
 
     def __str__(self):
-        return f"Профиль {self.user.username}"
+        return f"Профиль {self.user.username} [{self.get_role_display()}]"
 
 
 @receiver(post_save, sender=User)

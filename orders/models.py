@@ -10,7 +10,9 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ('new', 'Новый'),
         ('preparing', 'Готовится'),
+        ('packing', 'Упаковываем'),
         ('delivering', 'В доставке'),
+        ('awaiting_confirmation', 'Ожидает подтверждения'),
         ('completed', 'Выполнен'),
         ('cancelled', 'Отменён'),
     ]
@@ -18,7 +20,19 @@ class Order(models.Model):
     phone = EncryptedCharField("Телефон", max_length=20)
     address = EncryptedTextField("Адрес доставки")
     total = models.DecimalField("Итого", max_digits=10, decimal_places=2)
-    status = models.CharField("Статус", max_length=20, choices=STATUS_CHOICES, default='new')
+    status = models.CharField("Статус", max_length=25, choices=STATUS_CHOICES, default='new')
+    courier_delivered_at = models.DateTimeField("Курьер доставил", null=True, blank=True)
+    customer_confirmed_at = models.DateTimeField("Клиент подтвердил", null=True, blank=True)
+
+    courier = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='courier_order',
+        verbose_name="Курьер"
+    )
+
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 
@@ -28,7 +42,7 @@ class Order(models.Model):
         ordering = ['-created_at']
         constraints = [
             CheckConstraint(condition=Q(total__gte=0), name='order_total_non_negative'),
-            CheckConstraint(condition=Q(status__in=['new', 'preparing', 'delivering', 'completed', 'cancelled']),
+            CheckConstraint(condition=Q(status__in=['new', 'preparing', 'packing', 'delivering', 'awaiting_confirmation', 'completed', 'cancelled']),
                             name='order_status_valid_choice'),
         ]
 

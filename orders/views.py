@@ -6,6 +6,7 @@ from .models import Order, OrderItem
 from decimal import Decimal
 from accounts.models import Profile, Address
 from cart import utils
+from django.utils import timezone
 
 
 @login_required
@@ -102,3 +103,18 @@ def order_detail(request, order_id):
         return redirect('accounts:account')
 
     return render(request, 'orders/order_detail.html', {'order': order})
+
+@login_required
+def confirm_receipt(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    if order.status != 'awaiting_confirmation':
+        messages.warning(request, "Этот заказ не требует подтверждения")
+        return redirect('accounts:account')
+
+    order.status = 'completed'
+    order.cuctomer_confirmed_at = timezone.now()
+    order.save()
+
+    messages.success(request, f"Заказ #{order.id} успешно подтвержден и закрыт!")
+    return redirect('accounts:account')

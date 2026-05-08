@@ -34,6 +34,9 @@ def user_login(request):
                 login(request, user)  # ← Авторизуем (функция ничего не возвращает)
                 username = form.cleaned_data.get('username')
                 messages.info(request, f"Добро пожаловать, {username}!")
+
+                if hasattr(user, 'profile') and user.profile.role == 'courier':
+                    return redirect('orders:courier_dashboard')
                 # Редирект: приоритет — ?next=, иначе — главная меню
                 next_url = request.GET.get('next')
                 if next_url:

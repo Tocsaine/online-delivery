@@ -2054,3 +2054,78 @@ html::-webkit-scrollbar-thumb {
 .orders-list {
     padding-bottom: 30px; /* 👈 Регулируй значение под себя */
 }
+
+/* =========================================
+   ✅ Кнопка подтверждения получения заказа
+   ========================================= */
+
+.btn-confirm-receipt {
+    background: var(--success);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 16px 32px;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    /* Тень и анимация */
+    box-shadow: 0 4px 14px rgba(39, 174, 96, 0.25);
+    transition: all 0.25s ease;
+
+    width: auto;
+    min-width: 260px;
+    display: block;
+}
+
+.btn-confirm-receipt:hover {
+    background: #219653;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+}
+
+.btn-confirm-receipt:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+}
+
+.confirm-receipt-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0 20px 0;
+}
+
+.btn-confirm-receipt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--success);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px 28px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.25);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    min-width: 240px;
+}
+
+.btn-confirm-receipt:hover {
+    background: #219653;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(39, 174, 96, 0.35);
+}
+
+.btn-confirm-receipt:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(39, 174, 96, 0.2);
+}
