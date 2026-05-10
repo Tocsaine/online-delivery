@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, stats_views
 from . import views_courier
 
 app_name = 'orders'
@@ -11,4 +11,5 @@ urlpatterns = [
     path('courier/accept/<int:order_id>/', views_courier.accept_order, name='accept_order'),
     path('courier/complete/<int:order_id>/', views_courier.complete_delivery, name='complete_delivery'),
     path('confirm/<int:order_id>/', views.confirm_receipt, name='confirm_receipt'),
+    path('stats/', stats_views.stats_dashboard, name='stats_dashboard'),
 ]
